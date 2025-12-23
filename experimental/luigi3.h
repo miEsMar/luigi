@@ -634,6 +634,7 @@ typedef struct UICode {
 } UICode;
 
 typedef struct UIGauge {
+#define UI_GAUGE_VERTICAL (1 << 0)
 	UIElement e;
 	double position;
 } UIGauge;
@@ -647,6 +648,7 @@ typedef struct UITable {
 } UITable;
 
 typedef struct UITextbox {
+#define UI_TEXTBOX_HIDE_CHARACTERS (1 << 0)
 	UIElement e;
 	char *string;
 	ptrdiff_t bytes;
@@ -671,10 +673,17 @@ typedef struct UIMenu {
 #endif
 
 typedef struct UISlider {
+#define UI_SLIDER_VERTICAL (1 << 0)
 	UIElement e;
 	double position;
 	int steps;
 } UISlider;
+
+typedef struct UIColorPicker {
+#define UI_COLOR_PICKER_HAS_OPACITY (1 << 0)
+	UIElement e;
+	float hue, saturation, value, opacity;
+} UIColorPicker;
 
 typedef struct UIMDIClient {
 #define UI_MDI_CLIENT_TRANSPARENT (1 << 0)
@@ -732,12 +741,12 @@ UIElement *UIElementCreate(size_t bytes, UIElement *parent, uint32_t flags,
 	int (*messageClass)(UIElement *, UIMessage, int, void *), const char *cClassName);
 
 UICheckbox *UICheckboxCreate(UIElement *parent, uint32_t flags, const char *label, ptrdiff_t labelBytes);
+UIColorPicker *UIColorPickerCreate(UIElement *parent, uint32_t flags);
 UIExpandPane *UIExpandPaneCreate(UIElement *parent, uint32_t flags, const char *label, ptrdiff_t labelBytes, uint32_t panelFlags);
 UIMDIClient *UIMDIClientCreate(UIElement *parent, uint32_t flags);
 UIMDIChild *UIMDIChildCreate(UIElement *parent, uint32_t flags, UIRectangle initialBounds, const char *title, ptrdiff_t titleBytes);
 UIPanel *UIPanelCreate(UIElement *parent, uint32_t flags);
 UIScrollBar *UIScrollBarCreate(UIElement *parent, uint32_t flags);
-UISlider *UISliderCreate(UIElement *parent, uint32_t flags);
 UISpacer *UISpacerCreate(UIElement *parent, uint32_t flags, int width, int height);
 UISplitPane *UISplitPaneCreate(UIElement *parent, uint32_t flags, float weight);
 UITabPane *UITabPaneCreate(UIElement *parent, uint32_t flags, const char *tabs /* separate with \t, terminate with \0 */);
@@ -753,6 +762,10 @@ void UILabelSetContent(UILabel *code, const char *content, ptrdiff_t byteCount);
 
 UIImageDisplay *UIImageDisplayCreate(UIElement *parent, uint32_t flags, uint32_t *bits, size_t width, size_t height, size_t stride);
 void UIImageDisplaySetContent(UIImageDisplay *display, uint32_t *bits, size_t width, size_t height, size_t stride);
+
+
+UISlider *UISliderCreate(UIElement *parent, uint32_t flags);
+void UISliderSetPosition(UISlider *slider, double value, bool sendChangedMessage);
 
 UISwitcher *UISwitcherCreate(UIElement *parent, uint32_t flags);
 void UISwitcherSwitchTo(UISwitcher *switcher, UIElement *child);
@@ -1782,17 +1795,26 @@ void UIDrawControlDefault(UIPainter *painter, UIRectangle bounds, uint32_t mode,
 	} else if (which == UI_DRAW_CONTROL_GAUGE) {
 		UIDrawRectangle(painter, bounds, ui.theme.buttonNormal, ui.theme.border, UI_RECT_1(1));
 		UIRectangle filled = UIRectangleAdd(bounds, UI_RECT_1I(1));
-		filled.r = filled.l + UI_RECT_WIDTH(filled) * position;
+		if (mode & UI_DRAW_CONTROL_STATE_VERTICAL) {
+			filled.t = filled.b - UI_RECT_HEIGHT(filled) * position;
+		} else {
+			filled.r = filled.l + UI_RECT_WIDTH(filled) * position;
+		}
 		UIDrawBlock(painter, filled, ui.theme.selected);
 	} else if (which == UI_DRAW_CONTROL_SLIDER) {
+		bool vertical = mode & UI_DRAW_CONTROL_STATE_VERTICAL;
+		int centerX = (bounds.r + bounds.l) / 2;
 		int centerY = (bounds.t + bounds.b) / 2;
+		int center = vertical ? centerX : centerY;
 		int trackSize = UI_SIZE_SLIDER_TRACK * scale;
 		int thumbSize = UI_SIZE_SLIDER_THUMB * scale;
-		int thumbPosition = (UI_RECT_WIDTH(bounds) - thumbSize) * position;
-		UIRectangle track = UI_RECT_4(bounds.l, bounds.r, centerY - (trackSize + 1) / 2, centerY + trackSize / 2);
+		int thumbPosition = vertical ? (UI_RECT_HEIGHT(bounds) - thumbSize) * position : (UI_RECT_WIDTH(bounds) - thumbSize) * position;
+		UIRectangle track = vertical ? UI_RECT_4(center - (trackSize + 1) / 2, center + trackSize / 2, bounds.t, bounds.b) :
+								UI_RECT_4(bounds.l, bounds.r, center - (trackSize + 1) / 2, center + trackSize / 2);
 		UIDrawRectangle(painter, track, disabled ? ui.theme.buttonDisabled : ui.theme.buttonNormal, ui.theme.border, UI_RECT_1(1));
 		uint32_t color = disabled ? ui.theme.buttonDisabled : pressed ? ui.theme.buttonPressed : hovered ? ui.theme.buttonHovered : ui.theme.buttonNormal;
-		UIRectangle thumb = UI_RECT_4(bounds.l + thumbPosition, bounds.l + thumbPosition + thumbSize, centerY - (thumbSize + 1) / 2, centerY + thumbSize / 2);
+		UIRectangle thumb = vertical ? UI_RECT_4(center - (thumbSize + 1) / 2, center + thumbSize / 2, bounds.b - thumbPosition - thumbSize, bounds.b - thumbPosition) :
+								UI_RECT_4(bounds.l + thumbPosition, bounds.l + thumbPosition + thumbSize, center - (thumbSize + 1) / 2, center + thumbSize / 2);
 		UIDrawRectangle(painter, thumb, color, ui.theme.border, UI_RECT_1(1));
 	} else if (which == UI_DRAW_CONTROL_TEXTBOX) {
 		UIDrawRectangle(painter, bounds,
@@ -3360,14 +3382,15 @@ UICode *UICodeCreate(UIElement *parent, uint32_t flags) {
 
 int _UIGaugeMessage(UIElement *element, UIMessage message, int di, void *dp) {
 	UIGauge *gauge = (UIGauge *) element;
+	bool vertical = element->flags & UI_GAUGE_VERTICAL;
 
 	if (message == UI_MSG_GET_HEIGHT) {
-		return UI_SIZE_GAUGE_HEIGHT * element->window->scale;
+		return vertical ? UI_SIZE_GAUGE_WIDTH * element->window->scale : UI_SIZE_GAUGE_HEIGHT * element->window->scale;
 	} else if (message == UI_MSG_GET_WIDTH) {
-		return UI_SIZE_GAUGE_WIDTH * element->window->scale;
+		return vertical ? UI_SIZE_GAUGE_HEIGHT * element->window->scale : UI_SIZE_GAUGE_WIDTH * element->window->scale;
 	} else if (message == UI_MSG_PAINT) {
-		UIDrawControl((UIPainter *) dp, element->bounds, UI_DRAW_CONTROL_GAUGE | UI_DRAW_CONTROL_STATE_FROM_ELEMENT(element),
-				NULL, 0, gauge->position, element->window->scale);
+		UIDrawControl((UIPainter *) dp, element->bounds, UI_DRAW_CONTROL_GAUGE | UI_DRAW_CONTROL_STATE_FROM_ELEMENT(element)
+				| (vertical ? UI_DRAW_CONTROL_STATE_VERTICAL : 0), NULL, 0, gauge->position, element->window->scale);
 	}
 
 	return 0;
@@ -3375,6 +3398,8 @@ int _UIGaugeMessage(UIElement *element, UIMessage message, int di, void *dp) {
 
 void UIGaugeSetPosition(UIGauge *gauge, float position) {
 	if (position == gauge->position) return;
+	if (position < 0) position = 0;
+	if (position > 1) position = 1;
 	gauge->position = position;
 	UIElementRepaint(&gauge->e, NULL);
 }
@@ -3389,28 +3414,39 @@ UIGauge *UIGaugeCreate(UIElement *parent, uint32_t flags) {
 
 int _UISliderMessage(UIElement *element, UIMessage message, int di, void *dp) {
 	UISlider *slider = (UISlider *) element;
+	bool vertical = element->flags & UI_SLIDER_VERTICAL;
 
 	if (message == UI_MSG_GET_HEIGHT) {
-		return UI_SIZE_SLIDER_HEIGHT * element->window->scale;
+		return vertical ? UI_SIZE_SLIDER_WIDTH * element->window->scale : UI_SIZE_SLIDER_HEIGHT * element->window->scale;
 	} else if (message == UI_MSG_GET_WIDTH) {
-		return UI_SIZE_SLIDER_WIDTH * element->window->scale;
+		return vertical ? UI_SIZE_SLIDER_HEIGHT * element->window->scale : UI_SIZE_SLIDER_WIDTH * element->window->scale;
 	} else if (message == UI_MSG_PAINT) {
-		UIDrawControl((UIPainter *) dp, element->bounds, UI_DRAW_CONTROL_SLIDER | UI_DRAW_CONTROL_STATE_FROM_ELEMENT(element),
+		UIDrawControl((UIPainter *) dp, element->bounds, UI_DRAW_CONTROL_SLIDER |
+				(vertical ? UI_DRAW_CONTROL_STATE_VERTICAL : 0) | UI_DRAW_CONTROL_STATE_FROM_ELEMENT(element),
 				NULL, 0, slider->position, element->window->scale);
 	} else if (message == UI_MSG_LEFT_DOWN || (message == UI_MSG_MOUSE_DRAG && element->window->pressedButton == 1)) {
 		UIRectangle bounds = element->bounds;
 		int thumbSize = UI_SIZE_SLIDER_THUMB * element->window->scale;
-		slider->position = (double) (element->window->cursorX - thumbSize / 2 - bounds.l) / (UI_RECT_WIDTH(bounds) - thumbSize);
-		if (slider->steps > 1) slider->position = (int) (slider->position * (slider->steps - 1) + 0.5f) / (double) (slider->steps - 1);
-		if (slider->position < 0) slider->position = 0;
-		if (slider->position > 1) slider->position = 1;
-		UIElementMessage(element, UI_MSG_VALUE_CHANGED, 0, 0);
+		double position = vertical ? 1 - ((float) (element->window->cursorY - thumbSize / 2 - bounds.t) / (UI_RECT_HEIGHT(bounds) - thumbSize)) 
+			: (double) (element->window->cursorX - thumbSize / 2 - bounds.l) / (UI_RECT_WIDTH(bounds) - thumbSize);
+		UISliderSetPosition(slider, position, true);
 		UIElementRepaint(element, NULL);
 	} else if (message == UI_MSG_UPDATE) {
 		UIElementRepaint(element, NULL);
 	}
 
 	return 0;
+}
+
+
+void UISliderSetPosition(UISlider *slider, double position, bool sendChangedMessage) {
+	if (position == slider->position) return;
+	if (slider->steps > 1) position = (int) (position * (slider->steps - 1) + 0.5f) / (float) (slider->steps - 1);
+	if (position < 0) position = 0;
+	if (position > 1) position = 1;
+	slider->position = position;
+	if (sendChangedMessage) UIElementMessage(&slider->e, UI_MSG_VALUE_CHANGED, 0, 0);
+	UIElementRepaint(&slider->e, NULL);
 }
 
 UISlider *UISliderCreate(UIElement *parent, uint32_t flags) {
@@ -5218,6 +5254,8 @@ const uint64_t _uiFont[] = {
 	0x1800181818180000UL, 0x0000000018181818UL, 0x18701818180E0000UL, 0x000000000E181818UL, 0x000000003B6E0000UL, 0x0000000000000000UL, 0x63361C0800000000UL, 0x00000000007F6363UL,
 };
 
+
+#ifdef UI_FREETYPE
 void UIEnsureGlyphRendered(UIFont *font, int c) {
 	if (!font->glyphsRendered[c]) {
 		FT_Load_Char(font->font, c == 24 ? 0x2191 : c == 25 ? 0x2193 : c == 26 ? 0x2192 : c == 27 ? 0x2190 : c, FT_LOAD_DEFAULT);
@@ -5233,6 +5271,7 @@ void UIEnsureGlyphRendered(UIFont *font, int c) {
 		font->glyphsRendered[c] = true;
 	}
 }
+#endif
 
 void UIDrawGlyph(UIPainter *painter, int x0, int y0, int c, uint32_t color) {
 #ifdef UI_FREETYPE
@@ -5334,6 +5373,7 @@ void UIDrawGlyph(UIPainter *painter, int x0, int y0, int c, uint32_t color) {
 }
 
 void UIFontDestroy(UIFont *font) {
+#ifdef UI_FREETYPE
 	for (uintptr_t i = 0; i < _UNICODE_MAX_CODEPOINT; i++) {
 		if (font->glyphsRendered[i]) {
 			FT_Bitmap_Done(ui.ft, &font->glyphs[i]);
@@ -5346,6 +5386,7 @@ void UIFontDestroy(UIFont *font) {
 	UI_FREE(font->glyphOffsetsX);
 	UI_FREE(font->glyphOffsetsY);
 	UI_FREE(font->glyphAdvance);
+#endif
 	UI_FREE(font);
 }
 
