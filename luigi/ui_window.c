@@ -11,9 +11,6 @@
 #include "utils.h"
 
 
-#include "inspector.h"
-
-
 //
 
 
@@ -955,11 +952,13 @@ void UIEpollAdd(int fd, UIEpollDispatchPtr *ptr)
     UI_ASSERT(success);
 }
 
+
 void UIEpollRemove(int fd)
 {
     bool success = 0 == epoll_ctl(ui.epollFD, EPOLL_CTL_DEL, fd, NULL);
     UI_ASSERT(success);
 }
+
 
 void UIWindowPostMessage(UIWindow *window, UIMessage message, void *_dp)
 {
