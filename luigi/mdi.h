@@ -55,12 +55,6 @@ UIMDIChild  *UIMDIChildCreate(UIElement *parent, uint32_t flags, UIRectangle ini
                               const char *title, ptrdiff_t titleBytes);
 
 
-int  _UIMDIClientMessage(UIElement *element, UIMessage message, int di, void *dp);
-int  _UIMDIChildMessage(UIElement *element, UIMessage message, int di, void *dp);
-int  _UIMDIChildHitTest(UIMDIChild *mdiChild, int x, int y);
-void _UIMDIChildCloseButton(void *_child);
-
-
 #ifdef __cplusplus
 }
 #endif

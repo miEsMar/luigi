@@ -8,11 +8,10 @@
 #include "utils.h"
 
 
-/////////////////////////////////////////
-// MDI clients.
-/////////////////////////////////////////
+//
 
-int _UIMDIChildHitTest(UIMDIChild *mdiChild, int x, int y)
+
+static inline int _UIMDIChildHitTest(UIMDIChild *mdiChild, int x, int y)
 {
     UIElement *element = &mdiChild->e;
     UI_MDI_CHILD_CALCULATE_LAYOUT(element->bounds, element->window->scale);
@@ -42,18 +41,7 @@ int _UIMDIChildHitTest(UIMDIChild *mdiChild, int x, int y)
 }
 
 
-void _UIMDIChildCloseButton(void *_child)
-{
-    UIElement *child = (UIElement *)_child;
-
-    if (!UIElementMessage(child, UI_MSG_WINDOW_CLOSE, 0, 0)) {
-        UIElementDestroy(child);
-        UIElementRefresh(child->parent);
-    }
-}
-
-
-int _UIMDIChildMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIMDIChildMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIMDIChild *mdiChild = (UIMDIChild *)element;
 
@@ -162,7 +150,7 @@ int _UIMDIChildMessage(UIElement *element, UIMessage message, int di, void *dp)
 }
 
 
-int _UIMDIClientMessage(UIElement *element, UIMessage message, int di, void *dp)
+static inline int _UIMDIClientMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIMDIClient *client = (UIMDIClient *)element;
 
@@ -211,6 +199,21 @@ int _UIMDIClientMessage(UIElement *element, UIMessage message, int di, void *dp)
 
     return 0;
 }
+
+
+static inline void _UIMDIChildCloseButton(void *_child)
+{
+    UIElement *child = (UIElement *)_child;
+
+    if (!UIElementMessage(child, UI_MSG_WINDOW_CLOSE, 0, 0)) {
+        UIElementDestroy(child);
+        UIElementRefresh(child->parent);
+    }
+}
+
+
+//
+
 
 UIMDIChild *UIMDIChildCreate(UIElement *parent, uint32_t flags, UIRectangle initialBounds,
                              const char *title, ptrdiff_t titleBytes)
