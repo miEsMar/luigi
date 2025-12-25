@@ -10,7 +10,7 @@ struct Luigi ui;
 
 void _UIInitialiseCommon(void)
 {
-    ui.theme = uiThemeClassic;
+    ui.theme = uiThemeDark;
 
 #ifdef UI_FREETYPE
     FT_Init_FreeType(&ui.ft);

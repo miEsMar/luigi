@@ -14,9 +14,11 @@ extern "C" {
 #include "ui_window.h"
 
 
-#define UI_ALIGN_LEFT   (1)
-#define UI_ALIGN_RIGHT  (2)
-#define UI_ALIGN_CENTER (3)
+typedef enum UI_Alignment {
+    UI_ALIGN_LEFT = 1,
+    UI_ALIGN_RIGHT,
+    UI_ALIGN_CENTER,
+} UI_Alignment;
 
 
 //
