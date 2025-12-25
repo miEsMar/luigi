@@ -126,7 +126,6 @@ void _UIWindowSetPressed(UIWindow *window, UIElement *element, int button);
 void _UIWindowGetScreenPosition(UIWindow *window, int *_x, int *_y);
 void _UIWindowEndPaint(UIWindow *window, UIPainter *painter);
 
-void _UIInitialiseCommon(void);
 int  _UIWindowMessageCommon(UIElement *element, UIMessage message, int di, void *dp);
 void _UIWindowDestroyCommon(UIWindow *window);
 

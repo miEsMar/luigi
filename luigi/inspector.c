@@ -1,5 +1,4 @@
 #include "inspector.h"
-#include "ui.h"
 #include "ui_code.h"
 #include "ui_draw.h"
 #include "ui_element.h"
@@ -14,15 +13,20 @@
 //
 
 
+static UIInspector inspector = {0};
+
+
 void UIInspectorLog(const char *cFormat, ...)
 {
     va_list arguments;
+
     va_start(arguments, cFormat);
     char buffer[4096];
     vsnprintf(buffer, sizeof(buffer), cFormat, arguments);
-    UICodeInsertContent(ui.inspectorLog, buffer, -1, false);
+    UICodeInsertContent(inspector.inspectorLog, buffer, -1, false);
     va_end(arguments);
-    UIElementRefresh(&ui.inspectorLog->e);
+
+    UIElementRefresh(&inspector.inspectorLog->e);
 }
 
 
@@ -56,7 +60,7 @@ UIElement *_UIInspectorFindNthElement(UIElement *element, int *index, int *depth
 
 int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
-    if (!ui.inspectorTarget) {
+    if (!inspector.inspectorTarget) {
         return 0;
     }
 
@@ -64,7 +68,8 @@ int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void
         UITableGetItem *m     = (UITableGetItem *)dp;
         int             index = m->index;
         int             depth = 0;
-        UIElement *element    = _UIInspectorFindNthElement(&ui.inspectorTarget->e, &index, &depth);
+        UIElement      *element =
+            _UIInspectorFindNthElement(&inspector.inspectorTarget->e, &index, &depth);
         if (!element)
             return 0;
 
@@ -79,12 +84,12 @@ int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void
                             element->window->focused == element ? '*' : ' ');
         }
     } else if (message == UI_MSG_MOUSE_MOVE) {
-        int index =
-            UITableHitTest(ui.inspectorTable, element->window->cursorX, element->window->cursorY);
+        int        index   = UITableHitTest(inspector.inspectorTable, element->window->cursorX,
+                                            element->window->cursorY);
         UIElement *element = NULL;
         if (index >= 0)
-            element = _UIInspectorFindNthElement(&ui.inspectorTarget->e, &index, NULL);
-        UIWindow *window     = ui.inspectorTarget;
+            element = _UIInspectorFindNthElement(&inspector.inspectorTarget->e, &index, NULL);
+        UIWindow *window     = inspector.inspectorTarget;
         UIPainter painter    = {0};
         window->updateRegion = window->e.bounds;
         painter.bits         = window->bits;
@@ -113,11 +118,11 @@ int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void
 
 void _UIInspectorCreate(void)
 {
-    ui.inspector                     = UIWindowCreate(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
-    UISplitPane *splitPane           = UISplitPaneCreate(&ui.inspector->e, 0, 0.5f);
-    ui.inspectorTable                = UITableCreate(&splitPane->e, 0, "Class\tBounds\tID");
-    ui.inspectorTable->e.messageUser = _UIInspectorTableMessage;
-    ui.inspectorLog                  = UICodeCreate(&splitPane->e, 0);
+    inspector.window         = UIWindowCreate(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
+    UISplitPane *splitPane   = UISplitPaneCreate(&inspector.window->e, 0, 0.5f);
+    inspector.inspectorTable = UITableCreate(&splitPane->e, 0, "Class\tBounds\tID");
+    inspector.inspectorTable->e.messageUser = _UIInspectorTableMessage;
+    inspector.inspectorLog                  = UICodeCreate(&splitPane->e, 0);
 }
 
 
@@ -139,29 +144,25 @@ int _UIInspectorCountElements(UIElement *element)
 
 void _UIInspectorRefresh(void)
 {
-    if (!ui.inspectorTarget || !ui.inspector || !ui.inspectorTable)
+    if (!inspector.inspectorTarget || !inspector.window || !inspector.inspectorTable)
         return;
-    ui.inspectorTable->itemCount = _UIInspectorCountElements(&ui.inspectorTarget->e);
-    UITableResizeColumns(ui.inspectorTable);
-    UIElementRefresh(&ui.inspectorTable->e);
+    inspector.inspectorTable->itemCount = _UIInspectorCountElements(&inspector.inspectorTarget->e);
+    UITableResizeColumns(inspector.inspectorTable);
+    UIElementRefresh(&inspector.inspectorTable->e);
 }
 
 
 void _UIInspectorSetFocusedWindow(UIWindow *window)
 {
-    if (!ui.inspector || !ui.inspectorTable)
+    if (!inspector.window || !inspector.inspectorTable)
         return;
 
     if (window->e.flags & UI_WINDOW_INSPECTOR) {
         return;
     }
 
-    if (ui.inspectorTarget != window) {
-        ui.inspectorTarget = window;
+    if (inspector.inspectorTarget != window) {
+        inspector.inspectorTarget = window;
         _UIInspectorRefresh();
     }
 }
-
-// void _UIInspectorCreate() {}
-// void _UIInspectorSetFocusedWindow(UIWindow *window) {}
-// void _UIInspectorRefresh() {}

@@ -1,0 +1,35 @@
+#ifndef LUIGI_CURSOR_H_
+#define LUIGI_CURSOR_H_
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+typedef enum UICursorKind {
+    UI_CURSOR_ARROW = 0,
+    UI_CURSOR_TEXT,
+    UI_CURSOR_SPLIT_V,
+    UI_CURSOR_SPLIT_H,
+    UI_CURSOR_FLIPPED_ARROW,
+    UI_CURSOR_CROSS_HAIR,
+    UI_CURSOR_HAND,
+    UI_CURSOR_RESIZE_UP,
+    UI_CURSOR_RESIZE_LEFT,
+    UI_CURSOR_RESIZE_UP_RIGHT,
+    UI_CURSOR_RESIZE_UP_LEFT,
+    UI_CURSOR_RESIZE_DOWN,
+    UI_CURSOR_RESIZE_RIGHT,
+    UI_CURSOR_RESIZE_DOWN_RIGHT,
+    UI_CURSOR_RESIZE_DOWN_LEFT,
+    UI_CURSOR_COUNT,
+} UICursorKind;
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif // LUIGI_CURSOR_H_

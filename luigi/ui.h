@@ -8,10 +8,8 @@ extern "C" {
 
 
 #include "font.h"
-#include "ui_code.h"
 #include "ui_cursor.h"
 #include "ui_element.h"
-#include "ui_table.h"
 #include "ui_theme.h"
 #include "ui_window.h"
 
@@ -44,13 +42,6 @@ struct Luigi {
     bool        dialogCanExit;
 
     UIFont *activeFont;
-
-    // #ifdef UI_DEBUG
-    UIWindow *inspector;
-    UITable  *inspectorTable;
-    UIWindow *inspectorTarget;
-    UICode   *inspectorLog;
-    // #endif
 
 #ifdef UI_LINUX
     Display *display;
@@ -95,6 +86,7 @@ struct Luigi {
 //
 
 
+void _UIInitialiseCommon(void);
 void _UIUpdate(void);
 bool _UIDestroy(UIElement *element);
 

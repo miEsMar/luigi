@@ -68,17 +68,6 @@ void _UIWindowDestroyCommon(UIWindow *window)
     UI_FREE(window->shortcuts);
 }
 
-void _UIInitialiseCommon(void)
-{
-    ui.theme = uiThemeClassic;
-
-#ifdef UI_FREETYPE
-    FT_Init_FreeType(&ui.ft);
-    UIFontActivate(UIFontCreate(_UI_TO_STRING_2(UI_FONT_PATH), 11));
-#else
-    UIFontActivate(UIFontCreate(0, 0));
-#endif
-}
 
 void _UIWindowAdd(UIWindow *window)
 {
