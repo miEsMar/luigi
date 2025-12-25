@@ -415,3 +415,46 @@ void _UIElementPaint(UIElement *element, UIPainter *painter)
                      UI_RECT_1((int)element->window->scale));
     }
 }
+
+
+bool _UIDestroy(UIElement *element)
+{
+    if (element->flags & UI_ELEMENT_DESTROY_DESCENDENT) {
+        element->flags &= ~UI_ELEMENT_DESTROY_DESCENDENT;
+
+        for (uintptr_t i = 0; i < element->childCount; i++) {
+            if (_UIDestroy(element->children[i])) {
+                UI_MEMMOVE(&element->children[i], &element->children[i + 1],
+                           sizeof(UIElement *) * (element->childCount - i - 1));
+                element->childCount--, i--;
+            }
+        }
+    }
+
+    if (element->flags & UI_ELEMENT_DESTROY) {
+        UIElementMessage(element, UI_MSG_DEALLOCATE, 0, 0);
+
+        if (element->window->pressed == element) {
+            _UIWindowSetPressed(element->window, NULL, 0);
+        }
+
+        if (element->window->hovered == element) {
+            element->window->hovered = &element->window->e;
+        }
+
+        if (element->window->focused == element) {
+            element->window->focused = NULL;
+        }
+
+        if (element->window->dialogOldFocus == element) {
+            element->window->dialogOldFocus = NULL;
+        }
+
+        UIElementAnimate(element, true);
+        UI_FREE(element->children);
+        UI_FREE(element);
+        return true;
+    } else {
+        return false;
+    }
+}

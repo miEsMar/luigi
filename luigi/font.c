@@ -6,10 +6,14 @@
 #include <stdint.h>
 
 
+#ifdef UI_FREETYPE
+static FT_Library ft = {0};
+#endif
+
+
 // Taken from https://commons.wikimedia.org/wiki/File:Codepage-437.png
 // Public domain.
-
-const uint64_t _uiFont[] = {
+static const uint64_t __default_font[] = {
     0x0000000000000000UL, 0x0000000000000000UL, 0xBD8181A5817E0000UL, 0x000000007E818199UL,
     0xC3FFFFDBFF7E0000UL, 0x000000007EFFFFE7UL, 0x7F7F7F3600000000UL, 0x00000000081C3E7FUL,
     0x7F3E1C0800000000UL, 0x0000000000081C3EUL, 0xE7E73C3C18000000UL, 0x000000003C1818E7UL,
@@ -77,6 +81,68 @@ const uint64_t _uiFont[] = {
 };
 
 
+UIFont *UIFontCreate(const char *cPath, uint32_t size)
+{
+    UIFont *font = (UIFont *)UI_CALLOC(sizeof(UIFont));
+
+#ifndef UI_FREETYPE
+    (void)cPath;
+    (void)size;
+#else
+# ifdef UI_UNICODE
+    font->glyphs         = (FT_Bitmap *)UI_CALLOC(sizeof(FT_Bitmap) * (_UNICODE_MAX_CODEPOINT + 1));
+    font->glyphsRendered = (bool *)UI_CALLOC(sizeof(bool) * (_UNICODE_MAX_CODEPOINT + 1));
+    font->glyphOffsetsX  = (int *)UI_CALLOC(sizeof(int) * (_UNICODE_MAX_CODEPOINT + 1));
+    font->glyphOffsetsY  = (int *)UI_CALLOC(sizeof(int) * (_UNICODE_MAX_CODEPOINT + 1));
+    font->glyphAdvance   = (int *)UI_CALLOC(sizeof(int) * (_UNICODE_MAX_CODEPOINT + 1));
+# endif
+    if (cPath) {
+        int ret = FT_New_Face(ui.ft, cPath, 0, &font->font);
+        if (ret == 0) {
+            FT_Select_Charmap(font->font, FT_ENCODING_UNICODE);
+            if (FT_HAS_FIXED_SIZES(font->font) && font->font->num_fixed_sizes) {
+                // Look for the smallest strike that's at least `size`.
+                int j = 0;
+
+                for (int i = 0; i < font->font->num_fixed_sizes; i++) {
+                    if ((uint32_t)font->font->available_sizes[i].height >= size &&
+                        font->font->available_sizes[i].y_ppem <
+                            font->font->available_sizes[j].y_ppem) {
+                        j = i;
+                    }
+                }
+
+                FT_Set_Pixel_Sizes(font->font, font->font->available_sizes[j].x_ppem / 64,
+                                   font->font->available_sizes[j].y_ppem / 64);
+            } else {
+                FT_Set_Char_Size(font->font, 0, size * 64, 100, 100);
+            }
+
+            FT_Load_Char(font->font, 'a', FT_LOAD_DEFAULT);
+            font->glyphWidth = font->font->glyph->advance.x / 64;
+            font->glyphHeight =
+                (font->font->size->metrics.ascender - font->font->size->metrics.descender) / 64;
+            font->isFreeType = true;
+            return font;
+        } else
+            printf("Cannot load font %s : %d\n", cPath, ret);
+    }
+#endif
+
+    font->glyphWidth  = 9;
+    font->glyphHeight = 16;
+    return font;
+}
+
+
+UIFont *UIFontActivate(UIFont *font)
+{
+    UIFont *previous = ui.activeFont;
+    ui.activeFont    = font;
+    return previous;
+}
+
+
 #ifdef UI_FREETYPE
 void UIEnsureGlyphRendered(UIFont *font, int c)
 {
@@ -102,6 +168,7 @@ void UIEnsureGlyphRendered(UIFont *font, int c)
     }
 }
 #endif
+
 
 void UIDrawGlyph(UIPainter *painter, int x0, int y0, int c, uint32_t color)
 {
@@ -200,7 +267,7 @@ void UIDrawGlyph(UIPainter *painter, int x0, int y0, int c, uint32_t color)
     UIRectangle rectangle =
         UIRectangleIntersection(painter->clip, UI_RECT_4(x0, x0 + 8, y0, y0 + 16));
 
-    const uint8_t *data = (const uint8_t *)_uiFont + c * 16;
+    const uint8_t *data = (const uint8_t *)__default_font + c * 16;
 
     for (int i = rectangle.t; i < rectangle.b; i++) {
         uint32_t *bits = painter->bits + i * painter->width + rectangle.l;
@@ -210,70 +277,9 @@ void UIDrawGlyph(UIPainter *painter, int x0, int y0, int c, uint32_t color)
             if (byte & (1 << (j - x0))) {
                 *bits = color;
             }
-
             bits++;
         }
     }
-}
-
-UIFont *UIFontCreate(const char *cPath, uint32_t size)
-{
-    UIFont *font = (UIFont *)UI_CALLOC(sizeof(UIFont));
-
-#ifndef UI_FREETYPE
-    (void)cPath;
-#else
-# ifdef UI_UNICODE
-    font->glyphs         = (FT_Bitmap *)UI_CALLOC(sizeof(FT_Bitmap) * (_UNICODE_MAX_CODEPOINT + 1));
-    font->glyphsRendered = (bool *)UI_CALLOC(sizeof(bool) * (_UNICODE_MAX_CODEPOINT + 1));
-    font->glyphOffsetsX  = (int *)UI_CALLOC(sizeof(int) * (_UNICODE_MAX_CODEPOINT + 1));
-    font->glyphOffsetsY  = (int *)UI_CALLOC(sizeof(int) * (_UNICODE_MAX_CODEPOINT + 1));
-    font->glyphAdvance   = (int *)UI_CALLOC(sizeof(int) * (_UNICODE_MAX_CODEPOINT + 1));
-# endif
-    if (cPath) {
-        int ret = FT_New_Face(ui.ft, cPath, 0, &font->font);
-        if (ret == 0) {
-            FT_Select_Charmap(font->font, FT_ENCODING_UNICODE);
-            if (FT_HAS_FIXED_SIZES(font->font) && font->font->num_fixed_sizes) {
-                // Look for the smallest strike that's at least `size`.
-                int j = 0;
-
-                for (int i = 0; i < font->font->num_fixed_sizes; i++) {
-                    if ((uint32_t)font->font->available_sizes[i].height >= size &&
-                        font->font->available_sizes[i].y_ppem <
-                            font->font->available_sizes[j].y_ppem) {
-                        j = i;
-                    }
-                }
-
-                FT_Set_Pixel_Sizes(font->font, font->font->available_sizes[j].x_ppem / 64,
-                                   font->font->available_sizes[j].y_ppem / 64);
-            } else {
-                FT_Set_Char_Size(font->font, 0, size * 64, 100, 100);
-            }
-
-            FT_Load_Char(font->font, 'a', FT_LOAD_DEFAULT);
-            font->glyphWidth = font->font->glyph->advance.x / 64;
-            font->glyphHeight =
-                (font->font->size->metrics.ascender - font->font->size->metrics.descender) / 64;
-            font->isFreeType = true;
-            return font;
-        } else
-            printf("Cannot load font %s : %d\n", cPath, ret);
-    }
-#endif
-
-    font->glyphWidth  = 9;
-    font->glyphHeight = 16;
-    return font;
-}
-
-
-UIFont *UIFontActivate(UIFont *font)
-{
-    UIFont *previous = ui.activeFont;
-    ui.activeFont    = font;
-    return previous;
 }
 
 

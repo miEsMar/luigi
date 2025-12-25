@@ -30,24 +30,57 @@ const int UI_KEYCODE_PAGE_DOWN = XK_Page_Down;
 const int UI_KEYCODE_PAGE_UP   = XK_Page_Up;
 
 
+//
+
+
+void UI_Platform_render(UIWindow *window, UIPainter *painter)
+{
+    // c
+
+    XPutImage(ui.platform->display, window->window.window, DefaultGC(ui.platform->display, 0),
+              window->window.image, UI_RECT_TOP_LEFT(window->updateRegion),
+              UI_RECT_TOP_LEFT(window->updateRegion), UI_RECT_SIZE(window->updateRegion));
+    return;
+}
+
+
+void UI_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
+{
+    Window child;
+    (void)XTranslateCoordinates(ui.platform->display, window->window.window,
+                                DefaultRootWindow(ui.platform->display), 0, 0, _x, _y, &child);
+    return;
+}
+
+
+//
+
+
 int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
+    const UI_Platform *platform = ui.platform;
     if (message == UI_MSG_DEALLOCATE) {
         UIWindow *window = (UIWindow *)element;
         _UIWindowDestroyCommon(window);
-        window->image->data = NULL;
-        XDestroyImage(window->image);
-        XDestroyIC(window->xic);
-        XDestroyWindow(ui.display, ((UIWindow *)element)->window);
-        UI_FREE(window->uriList);
+        window->window.image->data = NULL;
+        XDestroyImage(window->window.image);
+        XDestroyIC(window->window.xic);
+        XDestroyWindow(platform->display, ((UIWindow *)element)->window.window);
+        UI_FREE(window->window.uriList);
     }
 
     return _UIWindowMessageCommon(element, message, di, dp);
 }
 
+
+//
+
+
 UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
                          int _height)
 {
+    UI_Platform *platform = ui.platform;
+
     _UIMenusClose();
 
     UIWindow *window = (UIWindow *)UIElementCreate(
@@ -62,46 +95,50 @@ UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, in
     XSetWindowAttributes attributes = {};
     attributes.override_redirect    = flags & UI_WINDOW_MENU;
 
-    window->window =
-        XCreateWindow(ui.display, DefaultRootWindow(ui.display), 0, 0, width, height, 0, 0,
-                      InputOutput, CopyFromParent, CWOverrideRedirect, &attributes);
+    window->window.window =
+        XCreateWindow(platform->display, DefaultRootWindow(platform->display), 0, 0, width, height,
+                      0, 0, InputOutput, CopyFromParent, CWOverrideRedirect, &attributes);
     if (cTitle)
-        XStoreName(ui.display, window->window, cTitle);
-    XSelectInput(ui.display, window->window,
+        XStoreName(platform->display, window->window.window, cTitle);
+    XSelectInput(platform->display, window->window.window,
                  SubstructureNotifyMask | ExposureMask | PointerMotionMask | ButtonPressMask |
                      ButtonReleaseMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask |
                      EnterWindowMask | LeaveWindowMask | ButtonMotionMask | KeymapStateMask |
                      FocusChangeMask | PropertyChangeMask);
 
     if (flags & UI_WINDOW_MAXIMIZE) {
-        Atom atoms[2] = {XInternAtom(ui.display, "_NET_WM_STATE_MAXIMIZED_HORZ", 0),
-                         XInternAtom(ui.display, "_NET_WM_STATE_MAXIMIZED_VERT", 0)};
-        XChangeProperty(ui.display, window->window, XInternAtom(ui.display, "_NET_WM_STATE", 0),
-                        XA_ATOM, 32, PropModeReplace, (unsigned char *)atoms, 2);
+        Atom atoms[2] = {XInternAtom(platform->display, "_NET_WM_STATE_MAXIMIZED_HORZ", 0),
+                         XInternAtom(platform->display, "_NET_WM_STATE_MAXIMIZED_VERT", 0)};
+        XChangeProperty(platform->display, window->window.window,
+                        XInternAtom(platform->display, "_NET_WM_STATE", 0), XA_ATOM, 32,
+                        PropModeReplace, (unsigned char *)atoms, 2);
     }
 
     if ((~flags & UI_WINDOW_MENU) && (~flags & UI_ELEMENT_HIDE)) {
-        XMapRaised(ui.display, window->window);
+        XMapRaised(platform->display, window->window.window);
     }
 
     if (flags & UI_WINDOW_CENTER_IN_OWNER) {
         int x = 0, y = 0;
         _UIWindowGetScreenPosition(owner, &x, &y);
-        XMoveResizeWindow(ui.display, window->window, x + owner->width / 2 - width / 2,
-                          y + owner->height / 2 - height / 2, width, height);
+        XMoveResizeWindow(platform->display, window->window.window,
+                          x + owner->width / 2 - width / 2, y + owner->height / 2 - height / 2,
+                          width, height);
     }
 
-    XSetWMProtocols(ui.display, window->window, &ui.windowClosedID, 1);
-    window->image = XCreateImage(ui.display, ui.visual, 24, ZPixmap, 0, NULL, 10, 10, 32, 0);
+    XSetWMProtocols(platform->display, window->window.window, &platform->windowClosedID, 1);
+    window->window.image =
+        XCreateImage(platform->display, platform->visual, 24, ZPixmap, 0, NULL, 10, 10, 32, 0);
 
-    window->xic = XCreateIC(ui.xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-                            XNClientWindow, window->window, XNFocusWindow, window->window, NULL);
+    window->window.xic =
+        XCreateIC(platform->xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, XNClientWindow,
+                  window->window.window, XNFocusWindow, window->window.window, NULL);
 
     int dndVersion = 4;
-    XChangeProperty(ui.display, window->window, ui.dndAwareID, XA_ATOM, 32 /* bits */,
-                    PropModeReplace, (uint8_t *)&dndVersion, 1);
+    XChangeProperty(platform->display, window->window.window, platform->dndAwareID, XA_ATOM,
+                    32 /* bits */, PropModeReplace, (uint8_t *)&dndVersion, 1);
 
-    XFlush(ui.display);
+    XFlush(platform->display);
 
     return window;
 }
@@ -110,7 +147,7 @@ UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, in
 Display *_UIX11GetDisplay()
 {
     // c
-    return ui.display;
+    return ui.platform->display;
 }
 
 
@@ -120,7 +157,7 @@ UIWindow *_UIFindWindow(Window window)
 
     // NOTE: linear search. Consider hashing.
     while (w) {
-        if (w->window == window) {
+        if (w->window.window == window) {
             return w;
         }
         w = w->next;
@@ -129,93 +166,104 @@ UIWindow *_UIFindWindow(Window window)
 }
 
 
-void UIInitialise()
+UI_Platform *UI_PlatformInit(void)
 {
-    _UIInitialiseCommon();
+    UI_Platform *platform = calloc(1, sizeof(*platform));
+    if (NULL == platform) {
+        return NULL;
+    }
 
     XInitThreads();
 
-    ui.display = XOpenDisplay(NULL);
-    ui.visual  = XDefaultVisual(ui.display, 0);
+    platform->display = XOpenDisplay(NULL);
+    platform->visual  = XDefaultVisual(platform->display, 0);
 
-    ui.windowClosedID   = XInternAtom(ui.display, "WM_DELETE_WINDOW", 0);
-    ui.primaryID        = XInternAtom(ui.display, "PRIMARY", 0);
-    ui.dndEnterID       = XInternAtom(ui.display, "XdndEnter", 0);
-    ui.dndLeaveID       = XInternAtom(ui.display, "XdndLeave", 0);
-    ui.dndTypeListID    = XInternAtom(ui.display, "XdndTypeList", 0);
-    ui.dndPositionID    = XInternAtom(ui.display, "XdndPosition", 0);
-    ui.dndStatusID      = XInternAtom(ui.display, "XdndStatus", 0);
-    ui.dndActionCopyID  = XInternAtom(ui.display, "XdndActionCopy", 0);
-    ui.dndDropID        = XInternAtom(ui.display, "XdndDrop", 0);
-    ui.dndSelectionID   = XInternAtom(ui.display, "XdndSelection", 0);
-    ui.dndFinishedID    = XInternAtom(ui.display, "XdndFinished", 0);
-    ui.dndAwareID       = XInternAtom(ui.display, "XdndAware", 0);
-    ui.uriListID        = XInternAtom(ui.display, "text/uri-list", 0);
-    ui.plainTextID      = XInternAtom(ui.display, "text/plain", 0);
-    ui.clipboardID      = XInternAtom(ui.display, "CLIPBOARD", 0);
-    ui.xSelectionDataID = XInternAtom(ui.display, "XSEL_DATA", 0);
-    ui.textID           = XInternAtom(ui.display, "TEXT", 0);
-    ui.targetID         = XInternAtom(ui.display, "TARGETS", 0);
-    ui.incrID           = XInternAtom(ui.display, "INCR", 0);
+    platform->windowClosedID   = XInternAtom(platform->display, "WM_DELETE_WINDOW", 0);
+    platform->primaryID        = XInternAtom(platform->display, "PRIMARY", 0);
+    platform->dndEnterID       = XInternAtom(platform->display, "XdndEnter", 0);
+    platform->dndLeaveID       = XInternAtom(platform->display, "XdndLeave", 0);
+    platform->dndTypeListID    = XInternAtom(platform->display, "XdndTypeList", 0);
+    platform->dndPositionID    = XInternAtom(platform->display, "XdndPosition", 0);
+    platform->dndStatusID      = XInternAtom(platform->display, "XdndStatus", 0);
+    platform->dndActionCopyID  = XInternAtom(platform->display, "XdndActionCopy", 0);
+    platform->dndDropID        = XInternAtom(platform->display, "XdndDrop", 0);
+    platform->dndSelectionID   = XInternAtom(platform->display, "XdndSelection", 0);
+    platform->dndFinishedID    = XInternAtom(platform->display, "XdndFinished", 0);
+    platform->dndAwareID       = XInternAtom(platform->display, "XdndAware", 0);
+    platform->uriListID        = XInternAtom(platform->display, "text/uri-list", 0);
+    platform->plainTextID      = XInternAtom(platform->display, "text/plain", 0);
+    platform->clipboardID      = XInternAtom(platform->display, "CLIPBOARD", 0);
+    platform->xSelectionDataID = XInternAtom(platform->display, "XSEL_DATA", 0);
+    platform->textID           = XInternAtom(platform->display, "TEXT", 0);
+    platform->targetID         = XInternAtom(platform->display, "TARGETS", 0);
+    platform->incrID           = XInternAtom(platform->display, "INCR", 0);
 
-    ui.cursors[UI_CURSOR_ARROW]             = XCreateFontCursor(ui.display, XC_left_ptr);
-    ui.cursors[UI_CURSOR_TEXT]              = XCreateFontCursor(ui.display, XC_xterm);
-    ui.cursors[UI_CURSOR_SPLIT_V]           = XCreateFontCursor(ui.display, XC_sb_v_double_arrow);
-    ui.cursors[UI_CURSOR_SPLIT_H]           = XCreateFontCursor(ui.display, XC_sb_h_double_arrow);
-    ui.cursors[UI_CURSOR_FLIPPED_ARROW]     = XCreateFontCursor(ui.display, XC_right_ptr);
-    ui.cursors[UI_CURSOR_CROSS_HAIR]        = XCreateFontCursor(ui.display, XC_crosshair);
-    ui.cursors[UI_CURSOR_HAND]              = XCreateFontCursor(ui.display, XC_hand1);
-    ui.cursors[UI_CURSOR_RESIZE_UP]         = XCreateFontCursor(ui.display, XC_top_side);
-    ui.cursors[UI_CURSOR_RESIZE_LEFT]       = XCreateFontCursor(ui.display, XC_left_side);
-    ui.cursors[UI_CURSOR_RESIZE_UP_RIGHT]   = XCreateFontCursor(ui.display, XC_top_right_corner);
-    ui.cursors[UI_CURSOR_RESIZE_UP_LEFT]    = XCreateFontCursor(ui.display, XC_top_left_corner);
-    ui.cursors[UI_CURSOR_RESIZE_DOWN]       = XCreateFontCursor(ui.display, XC_bottom_side);
-    ui.cursors[UI_CURSOR_RESIZE_RIGHT]      = XCreateFontCursor(ui.display, XC_right_side);
-    ui.cursors[UI_CURSOR_RESIZE_DOWN_LEFT]  = XCreateFontCursor(ui.display, XC_bottom_left_corner);
-    ui.cursors[UI_CURSOR_RESIZE_DOWN_RIGHT] = XCreateFontCursor(ui.display, XC_bottom_right_corner);
+    // clang-format off
+    platform->cursors[UI_CURSOR_ARROW]             = XCreateFontCursor(platform->display, XC_left_ptr);
+    platform->cursors[UI_CURSOR_TEXT]              = XCreateFontCursor(platform->display, XC_xterm);
+    platform->cursors[UI_CURSOR_SPLIT_V]           = XCreateFontCursor(platform->display, XC_sb_v_double_arrow);
+    platform->cursors[UI_CURSOR_SPLIT_H]           = XCreateFontCursor(platform->display, XC_sb_h_double_arrow);
+    platform->cursors[UI_CURSOR_FLIPPED_ARROW]     = XCreateFontCursor(platform->display, XC_right_ptr);
+    platform->cursors[UI_CURSOR_CROSS_HAIR]        = XCreateFontCursor(platform->display, XC_crosshair);
+    platform->cursors[UI_CURSOR_HAND]              = XCreateFontCursor(platform->display, XC_hand1);
+    platform->cursors[UI_CURSOR_RESIZE_UP]         = XCreateFontCursor(platform->display, XC_top_side);
+    platform->cursors[UI_CURSOR_RESIZE_LEFT]       = XCreateFontCursor(platform->display, XC_left_side);
+    platform->cursors[UI_CURSOR_RESIZE_UP_RIGHT]   = XCreateFontCursor(platform->display, XC_top_right_corner);
+    platform->cursors[UI_CURSOR_RESIZE_UP_LEFT]    = XCreateFontCursor(platform->display, XC_top_left_corner);
+    platform->cursors[UI_CURSOR_RESIZE_DOWN]       = XCreateFontCursor(platform->display, XC_bottom_side);
+    platform->cursors[UI_CURSOR_RESIZE_RIGHT]      = XCreateFontCursor(platform->display, XC_right_side);
+    platform->cursors[UI_CURSOR_RESIZE_DOWN_LEFT]  = XCreateFontCursor(platform->display, XC_bottom_left_corner);
+    platform->cursors[UI_CURSOR_RESIZE_DOWN_RIGHT] = XCreateFontCursor(platform->display, XC_bottom_right_corner);
+    // clang-format on
 
     XSetLocaleModifiers("");
 
-    ui.xim = XOpenIM(ui.display, 0, 0, 0);
+    platform->xim = XOpenIM(platform->display, 0, 0, 0);
 
-    if (!ui.xim) {
+    if (!platform->xim) {
         XSetLocaleModifiers("@im=none");
-        ui.xim = XOpenIM(ui.display, 0, 0, 0);
+        platform->xim = XOpenIM(platform->display, 0, 0, 0);
     }
 
-    ui.epollFD               = epoll_create1(EPOLL_CLOEXEC);
+    platform->epollFD        = epoll_create1(EPOLL_CLOEXEC);
     struct epoll_event event = {};
     event.events             = EPOLLIN;
-    event.data.ptr           = &ui.display;
-    epoll_ctl(ui.epollFD, EPOLL_CTL_ADD, ConnectionNumber(ui.display), &event);
+    event.data.ptr           = &platform->display;
+    epoll_ctl(platform->epollFD, EPOLL_CTL_ADD, ConnectionNumber(platform->display), &event);
+
+    return platform;
 }
 
 
 void _UIWindowSetCursor(UIWindow *window, int cursor)
 {
-    XDefineCursor(ui.display, window->window, ui.cursors[cursor]);
+    UI_Platform *platform = ui.platform;
+    XDefineCursor(platform->display, window->window.window, platform->cursors[cursor]);
 }
 
 
 void _UIX11ResetCursor(UIWindow *window)
 {
-    XDefineCursor(ui.display, window->window, ui.cursors[UI_CURSOR_ARROW]);
+    UI_Platform *platform = ui.platform;
+    XDefineCursor(platform->display, window->window.window, platform->cursors[UI_CURSOR_ARROW]);
 }
 
 
 void UIMenuShow(UIMenu *menu)
 {
+    UI_Platform *platform = ui.platform;
+
     Window child;
 
     // Find the screen that contains the point the menu was created at.
     Screen *menuScreen = NULL;
     int     screenX, screenY;
 
-    for (int i = 0; i < ScreenCount(ui.display); i++) {
-        Screen *screen = ScreenOfDisplay(ui.display, i);
+    for (int i = 0; i < ScreenCount(platform->display); i++) {
+        Screen *screen = ScreenOfDisplay(platform->display, i);
         int     x, y;
-        XTranslateCoordinates(ui.display, screen->root, DefaultRootWindow(ui.display), 0, 0, &x, &y,
-                              &child);
+        XTranslateCoordinates(platform->display, screen->root, DefaultRootWindow(platform->display),
+                              0, 0, &x, &y, &child);
 
         if (menu->pointX >= x && menu->pointX < x + screen->width && menu->pointY >= y &&
             menu->pointY < y + screen->height) {
@@ -234,8 +282,8 @@ void UIMenuShow(UIMenu *menu)
         // X11 drivers that report screen sizes incorrectly.
         int       wx, wy;
         UIWindow *parentWindow = menu->parentWindow;
-        XTranslateCoordinates(ui.display, parentWindow->window, DefaultRootWindow(ui.display), 0, 0,
-                              &wx, &wy, &child);
+        XTranslateCoordinates(platform->display, parentWindow->window.window,
+                              DefaultRootWindow(platform->display), 0, 0, &wx, &wy, &child);
         if (menu->pointX + width > wx + parentWindow->width)
             menu->pointX = wx + parentWindow->width - width;
         if (menu->pointY + height > wy + parentWindow->height)
@@ -263,14 +311,15 @@ void UIMenuShow(UIMenu *menu)
     }
 
     Atom properties[] = {
-        XInternAtom(ui.display, "_NET_WM_WINDOW_TYPE", true),
-        XInternAtom(ui.display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", true),
-        XInternAtom(ui.display, "_MOTIF_WM_HINTS", true),
+        XInternAtom(platform->display, "_NET_WM_WINDOW_TYPE", true),
+        XInternAtom(platform->display, "_NET_WM_WINDOW_TYPE_DROPDOWN_MENU", true),
+        XInternAtom(platform->display, "_MOTIF_WM_HINTS", true),
     };
 
-    XChangeProperty(ui.display, menu->e.window->window, properties[0], XA_ATOM, 32, PropModeReplace,
-                    (uint8_t *)properties, 2);
-    XSetTransientForHint(ui.display, menu->e.window->window, DefaultRootWindow(ui.display));
+    XChangeProperty(platform->display, menu->e.window->window.window, properties[0], XA_ATOM, 32,
+                    PropModeReplace, (uint8_t *)properties, 2);
+    XSetTransientForHint(platform->display, menu->e.window->window.window,
+                         DefaultRootWindow(platform->display));
 
     struct Hints {
         int flags;
@@ -282,26 +331,31 @@ void UIMenuShow(UIMenu *menu)
 
     struct Hints hints = {0};
     hints.flags        = 2;
-    XChangeProperty(ui.display, menu->e.window->window, properties[2], properties[2], 32,
-                    PropModeReplace, (uint8_t *)&hints, 5);
+    XChangeProperty(platform->display, menu->e.window->window.window, properties[2], properties[2],
+                    32, PropModeReplace, (uint8_t *)&hints, 5);
 
-    XMapWindow(ui.display, menu->e.window->window);
-    XMoveResizeWindow(ui.display, menu->e.window->window, menu->pointX, menu->pointY, width,
-                      height);
+    XMapWindow(platform->display, menu->e.window->window.window);
+    XMoveResizeWindow(platform->display, menu->e.window->window.window, menu->pointX, menu->pointY,
+                      width, height);
 }
 
 
 void UIWindowPack(UIWindow *window, int _width)
 {
+    const UI_Platform *platform = ui.platform;
+
     int width  = _width ? _width : UIElementMessage(window->e.children[0], UI_MSG_GET_WIDTH, 0, 0);
     int height = UIElementMessage(window->e.children[0], UI_MSG_GET_HEIGHT, width, 0);
-    XResizeWindow(ui.display, window->window, width, height);
+    XResizeWindow(platform->display, window->window.window, width, height);
 }
 
 
 bool _UIProcessEvent(XEvent *event)
 {
-    if (event->type == ClientMessage && (Atom)event->xclient.data.l[0] == ui.windowClosedID) {
+    const UI_Platform *platform = ui.platform;
+
+    if (event->type == ClientMessage &&
+        (Atom)event->xclient.data.l[0] == platform->windowClosedID) {
         UIWindow *window = _UIFindWindow(event->xclient.window);
         if (!window)
             return false;
@@ -314,8 +368,8 @@ bool _UIProcessEvent(XEvent *event)
         UIWindow *window = _UIFindWindow(event->xexpose.window);
         if (!window)
             return false;
-        XPutImage(ui.display, window->window, DefaultGC(ui.display, 0), window->image, 0, 0, 0, 0,
-                  window->width, window->height);
+        XPutImage(platform->display, window->window.window, DefaultGC(platform->display, 0),
+                  window->window.image, 0, 0, 0, 0, window->width, window->height);
     } else if (event->type == ConfigureNotify) {
         UIWindow *window = _UIFindWindow(event->xconfigure.window);
         if (!window)
@@ -326,12 +380,12 @@ bool _UIProcessEvent(XEvent *event)
             window->width  = event->xconfigure.width;
             window->height = event->xconfigure.height;
             window->bits = (uint32_t *)UI_REALLOC(window->bits, window->width * window->height * 4);
-            window->image->width          = window->width;
-            window->image->height         = window->height;
-            window->image->bytes_per_line = window->width * 4;
-            window->image->data           = (char *)window->bits;
-            window->e.bounds              = UI_RECT_2S(window->width, window->height);
-            window->e.clip                = UI_RECT_2S(window->width, window->height);
+            window->window.image->width          = window->width;
+            window->window.image->height         = window->height;
+            window->window.image->bytes_per_line = window->width * 4;
+            window->window.image->data           = (char *)window->bits;
+            window->e.bounds                     = UI_RECT_2S(window->width, window->height);
+            window->e.clip                       = UI_RECT_2S(window->width, window->height);
 # ifdef UI_DEBUG
             for (int i = 0; i < window->width * window->height; i++)
                 window->bits[i] = 0xFF00FF;
@@ -346,20 +400,21 @@ bool _UIProcessEvent(XEvent *event)
         window->cursorX = event->xmotion.x;
         window->cursorY = event->xmotion.y;
 
-        if (window->inDrag) {
+        if (window->window.inDrag) {
             // Find a window under the cursor with XdndAware.
-            Window dragDestination = DefaultRootWindow(ui.display);
+            Window dragDestination = DefaultRootWindow(platform->display);
             while (true) {
                 if (!dragDestination) {
                     break;
                 }
 
                 int32_t propertyCount;
-                Atom   *properties = XListProperties(ui.display, dragDestination, &propertyCount);
-                bool    aware      = false;
+                Atom   *properties =
+                    XListProperties(platform->display, dragDestination, &propertyCount);
+                bool aware = false;
 
                 for (int32_t i = 0; i < propertyCount && !aware; i++) {
-                    if (properties[i] == ui.dndAwareID) {
+                    if (properties[i] == platform->dndAwareID) {
                         aware = true;
                     }
                 }
@@ -372,25 +427,26 @@ bool _UIProcessEvent(XEvent *event)
                 int32_t  unused5, unused6, unused0, unused1;
                 uint32_t unused2;
                 Window   unused3;
-                XQueryPointer(ui.display, dragDestination, &unused3, &dragDestination, &unused0,
-                              &unused1, &unused5, &unused6, &unused2);
+                XQueryPointer(platform->display, dragDestination, &unused3, &dragDestination,
+                              &unused0, &unused1, &unused5, &unused6, &unused2);
             }
 
             // Get its XDND version.
             int dragDestinationVersion = -1;
-            if (dragDestination == window->dragDestination) {
-                dragDestinationVersion = window->dragDestinationVersion;
+            if (dragDestination == window->window.dragDestination) {
+                dragDestinationVersion = window->window.dragDestinationVersion;
             } else if (dragDestination != None) {
-                window->dragDestinationCanDrop = false; // Window changed.
+                window->window.dragDestinationCanDrop = false; // Window changed.
 
                 Atom          atom;
                 int32_t       format;
                 unsigned long itemCount, bytesRemaining;
                 uint8_t      *data;
 
-                if (Success == XGetWindowProperty(ui.display, dragDestination, ui.dndAwareID, 0, 2,
-                                                  False, AnyPropertyType, &atom, &format,
-                                                  &itemCount, &bytesRemaining, &data) &&
+                if (Success == XGetWindowProperty(platform->display, dragDestination,
+                                                  platform->dndAwareID, 0, 2, False,
+                                                  AnyPropertyType, &atom, &format, &itemCount,
+                                                  &bytesRemaining, &data) &&
                     data && format == 32 && itemCount == 1) {
                     dragDestinationVersion = data[0];
                     // printf("dragDestinationVersion = %d\n", dragDestinationVersion);
@@ -400,31 +456,31 @@ bool _UIProcessEvent(XEvent *event)
             }
 
             // Send XdndLeave to the old window.
-            if (dragDestination != window->dragDestination &&
-                window->dragDestinationVersion != -1) {
+            if (dragDestination != window->window.dragDestination &&
+                window->window.dragDestinationVersion != -1) {
                 XClientMessageEvent m = {.type         = ClientMessage,
-                                         .display      = ui.display,
-                                         .window       = window->dragDestination,
-                                         .message_type = ui.dndLeaveID,
+                                         .display      = platform->display,
+                                         .window       = window->window.dragDestination,
+                                         .message_type = platform->dndLeaveID,
                                          .format       = 32,
-                                         .data         = {.l = {window->window}}};
-                XSendEvent(ui.display, m.window, False, NoEventMask, (XEvent *)&m);
-                XFlush(ui.display);
+                                         .data         = {.l = {window->window.window}}};
+                XSendEvent(platform->display, m.window, False, NoEventMask, (XEvent *)&m);
+                XFlush(platform->display);
                 // printf("leave old window\n");
             }
 
             // Send XdndEnter to the new window.
-            if (dragDestination != window->dragDestination && dragDestinationVersion != -1) {
+            if (dragDestination != window->window.dragDestination && dragDestinationVersion != -1) {
                 uint32_t l1 = (dragDestinationVersion < 4 ? dragDestinationVersion : 4) << 24;
                 XClientMessageEvent m = {
                     .type         = ClientMessage,
-                    .display      = ui.display,
+                    .display      = platform->display,
                     .window       = dragDestination,
-                    .message_type = ui.dndEnterID,
+                    .message_type = platform->dndEnterID,
                     .format       = 32,
-                    .data         = {.l = {window->window, l1, ui.uriListID, None, None}}};
-                XSendEvent(ui.display, m.window, False, NoEventMask, (XEvent *)&m);
-                XFlush(ui.display);
+                    .data = {.l = {window->window.window, l1, platform->uriListID, None, None}}};
+                XSendEvent(platform->display, m.window, False, NoEventMask, (XEvent *)&m);
+                XFlush(platform->display);
                 // printf("enter new window %x\n", l1);
             }
 
@@ -433,21 +489,21 @@ bool _UIProcessEvent(XEvent *event)
                 int32_t  x, y, unused0, unused1;
                 uint32_t unused2;
                 Window   unused3, unused4;
-                XQueryPointer(ui.display, DefaultRootWindow(ui.display), &unused3, &unused4,
-                              &unused0, &unused1, &x, &y, &unused2);
+                XQueryPointer(platform->display, DefaultRootWindow(platform->display), &unused3,
+                              &unused4, &unused0, &unused1, &x, &y, &unused2);
                 XClientMessageEvent m = {.type         = ClientMessage,
-                                         .display      = ui.display,
+                                         .display      = platform->display,
                                          .window       = dragDestination,
-                                         .message_type = ui.dndPositionID,
+                                         .message_type = platform->dndPositionID,
                                          .format       = 32,
-                                         .data         = {.l = {window->window, 0, (x << 16) | y,
-                                                                CurrentTime, ui.dndActionCopyID}}};
-                XSendEvent(ui.display, m.window, False, NoEventMask, (XEvent *)&m);
-                XFlush(ui.display);
+                                         .data = {.l = {window->window.window, 0, (x << 16) | y,
+                                                        CurrentTime, platform->dndActionCopyID}}};
+                XSendEvent(platform->display, m.window, False, NoEventMask, (XEvent *)&m);
+                XFlush(platform->display);
             }
 
-            window->dragDestination        = dragDestination;
-            window->dragDestinationVersion = dragDestinationVersion;
+            window->window.dragDestination        = dragDestination;
+            window->window.dragDestinationVersion = dragDestinationVersion;
         } else {
             _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
         }
@@ -469,28 +525,28 @@ bool _UIProcessEvent(XEvent *event)
         window->cursorX = event->xbutton.x;
         window->cursorY = event->xbutton.y;
 
-        if (window->inDrag && event->type == ButtonRelease) {
+        if (window->window.inDrag && event->type == ButtonRelease) {
             // Send XdndLeave or XdndDrop.
-            if (window->dragDestinationVersion != -1) {
+            if (window->window.dragDestinationVersion != -1) {
                 XClientMessageEvent m = {.type    = ClientMessage,
-                                         .display = ui.display,
-                                         .window  = window->dragDestination,
+                                         .display = platform->display,
+                                         .window  = window->window.dragDestination,
                                          .format  = 32,
-                                         .data    = {.l = {window->window}}};
+                                         .data    = {.l = {window->window.window}}};
 
-                if (window->dragDestinationCanDrop) {
-                    m.message_type = ui.dndDropID;
+                if (window->window.dragDestinationCanDrop) {
+                    m.message_type = platform->dndDropID;
                     m.data.l[2]    = CurrentTime;
                 } else {
-                    m.message_type = ui.dndLeaveID;
+                    m.message_type = platform->dndLeaveID;
                 }
 
-                XSendEvent(ui.display, m.window, False, NoEventMask, (XEvent *)&m);
-                XFlush(ui.display);
+                XSendEvent(platform->display, m.window, False, NoEventMask, (XEvent *)&m);
+                XFlush(platform->display);
                 // printf("dropped\n");
             }
 
-            window->inDrag = false;
+            window->window.inDrag = false;
         }
 
         if (event->xbutton.button >= 1 && event->xbutton.button <= 3) {
@@ -526,22 +582,22 @@ bool _UIProcessEvent(XEvent *event)
             Status status;
             // printf("%ld, %s\n", symbol, text);
             UIKeyTyped m = {0};
-            m.textBytes  = Xutf8LookupString(window->xic, &event->xkey, text, sizeof(text) - 1,
-                                             &symbol, &status);
+            m.textBytes  = Xutf8LookupString(window->window.xic, &event->xkey, text,
+                                             sizeof(text) - 1, &symbol, &status);
             m.text       = text;
             m.code       = XLookupKeysym(&event->xkey, 0);
 
             if (symbol == XK_Control_L || symbol == XK_Control_R) {
-                window->ctrl     = true;
-                window->ctrlCode = event->xkey.keycode;
+                window->ctrl            = true;
+                window->window.ctrlCode = event->xkey.keycode;
                 _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
             } else if (symbol == XK_Shift_L || symbol == XK_Shift_R) {
-                window->shift     = true;
-                window->shiftCode = event->xkey.keycode;
+                window->shift            = true;
+                window->window.shiftCode = event->xkey.keycode;
                 _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
             } else if (symbol == XK_Alt_L || symbol == XK_Alt_R) {
-                window->alt     = true;
-                window->altCode = event->xkey.keycode;
+                window->alt            = true;
+                window->window.altCode = event->xkey.keycode;
                 _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
             } else if (symbol == XK_KP_Left) {
                 m.code = UI_KEYCODE_LEFT;
@@ -572,13 +628,13 @@ bool _UIProcessEvent(XEvent *event)
         if (!window)
             return false;
 
-        if (event->xkey.keycode == window->ctrlCode) {
+        if (event->xkey.keycode == window->window.ctrlCode) {
             window->ctrl = false;
             _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
-        } else if (event->xkey.keycode == window->shiftCode) {
+        } else if (event->xkey.keycode == window->window.shiftCode) {
             window->shift = false;
             _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
-        } else if (event->xkey.keycode == window->altCode) {
+        } else if (event->xkey.keycode == window->window.altCode) {
             window->alt = false;
             _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
         } else {
@@ -586,8 +642,8 @@ bool _UIProcessEvent(XEvent *event)
             KeySym     symbol = NoSymbol;
             Status     status;
             UIKeyTyped m = {0};
-            m.textBytes  = Xutf8LookupString(window->xic, &event->xkey, text, sizeof(text) - 1,
-                                             &symbol, &status);
+            m.textBytes  = Xutf8LookupString(window->window.xic, &event->xkey, text,
+                                             sizeof(text) - 1, &symbol, &status);
             m.text       = text;
             m.code       = XLookupKeysym(&event->xkey, 0);
             _UIWindowInputEvent(window, UI_MSG_KEY_RELEASED, 0, &m);
@@ -601,12 +657,14 @@ bool _UIProcessEvent(XEvent *event)
     } else if (event->type == FocusOut || event->type == ResizeRequest) {
         _UIMenusClose();
         _UIUpdate();
-    } else if (event->type == ClientMessage && event->xclient.message_type == ui.dndEnterID) {
+    } else if (event->type == ClientMessage &&
+               event->xclient.message_type == platform->dndEnterID) {
         UIWindow *window = _UIFindWindow(event->xclient.window);
         if (!window)
             return false;
-        window->dragSource = (Window)event->xclient.data.l[0];
-    } else if (event->type == ClientMessage && event->xclient.message_type == ui.dndPositionID) {
+        window->window.dragSource = (Window)event->xclient.data.l[0];
+    } else if (event->type == ClientMessage &&
+               event->xclient.message_type == platform->dndPositionID) {
         UIWindow *window = _UIFindWindow(event->xclient.window);
         if (!window)
             return false;
@@ -614,45 +672,48 @@ bool _UIProcessEvent(XEvent *event)
         m.type                = ClientMessage;
         m.display             = event->xclient.display;
         m.window              = (Window)event->xclient.data.l[0];
-        m.message_type        = ui.dndStatusID;
+        m.message_type        = platform->dndStatusID;
         m.format              = 32;
-        m.data.l[0]           = window->window;
+        m.data.l[0]           = window->window.window;
         m.data.l[1]           = true;
-        m.data.l[4]           = ui.dndActionCopyID;
-        XSendEvent(ui.display, m.window, False, NoEventMask, (XEvent *)&m);
-        XFlush(ui.display);
-    } else if (event->type == ClientMessage && event->xclient.message_type == ui.dndDropID) {
+        m.data.l[4]           = platform->dndActionCopyID;
+        XSendEvent(platform->display, m.window, False, NoEventMask, (XEvent *)&m);
+        XFlush(platform->display);
+    } else if (event->type == ClientMessage && event->xclient.message_type == platform->dndDropID) {
         UIWindow *window = _UIFindWindow(event->xclient.window);
         if (!window)
             return false;
 
         // TODO Dropping text.
 
-        if (!XConvertSelection(ui.display, ui.dndSelectionID, ui.uriListID, ui.primaryID,
-                               window->window, event->xclient.data.l[2])) {
+        if (!XConvertSelection(platform->display, platform->dndSelectionID, platform->uriListID,
+                               platform->primaryID, window->window.window,
+                               event->xclient.data.l[2])) {
             XClientMessageEvent m = {0};
             m.type                = ClientMessage;
-            m.display             = ui.display;
-            m.window              = window->dragSource;
-            m.message_type        = ui.dndFinishedID;
+            m.display             = platform->display;
+            m.window              = window->window.dragSource;
+            m.message_type        = platform->dndFinishedID;
             m.format              = 32;
-            m.data.l[0]           = window->window;
+            m.data.l[0]           = window->window.window;
             m.data.l[1]           = 0;
-            m.data.l[2]           = ui.dndActionCopyID;
-            XSendEvent(ui.display, m.window, False, NoEventMask, (XEvent *)&m);
-            XFlush(ui.display);
+            m.data.l[2]           = platform->dndActionCopyID;
+            XSendEvent(platform->display, m.window, False, NoEventMask, (XEvent *)&m);
+            XFlush(platform->display);
         }
-    } else if (event->type == ClientMessage && event->xclient.message_type == ui.dndStatusID) {
+    } else if (event->type == ClientMessage &&
+               event->xclient.message_type == platform->dndStatusID) {
         UIWindow *window = _UIFindWindow(event->xclient.window);
         if (!window)
             return false;
 
-        if (window->inDrag && window->dragDestinationVersion != -1 &&
-            window->dragDestination == (Window)event->xclient.data.l[0]) {
-            window->dragDestinationCanDrop = event->xclient.data.l[1] & 1;
+        if (window->window.inDrag && window->window.dragDestinationVersion != -1 &&
+            window->window.dragDestination == (Window)event->xclient.data.l[0]) {
+            window->window.dragDestinationCanDrop = event->xclient.data.l[1] & 1;
             // printf("window->dragDestinationCanDrop = %d\n", window->dragDestinationCanDrop);
         }
-    } else if (event->type == ClientMessage && event->xclient.message_type == ui.dndFinishedID) {
+    } else if (event->type == ClientMessage &&
+               event->xclient.message_type == platform->dndFinishedID) {
         UIWindow *window = _UIFindWindow(event->xclient.window);
         if (!window)
             return false;
@@ -661,18 +722,18 @@ bool _UIProcessEvent(XEvent *event)
         UIWindow *window = _UIFindWindow(event->xselection.requestor);
         if (!window)
             return false;
-        if (!window->dragSource)
+        if (!window->window.dragSource)
             return false;
 
         Atom          type   = None;
         int           format = 0;
         unsigned long count = 0, bytesLeft = 0;
         uint8_t      *data = NULL;
-        XGetWindowProperty(ui.display, window->window, ui.primaryID, 0, 65536, False,
-                           AnyPropertyType, &type, &format, &count, &bytesLeft, &data);
+        XGetWindowProperty(platform->display, window->window.window, platform->primaryID, 0, 65536,
+                           False, AnyPropertyType, &type, &format, &count, &bytesLeft, &data);
 
         if (format == 8 /* bits per character */) {
-            if (event->xselection.target == ui.uriListID) {
+            if (event->xselection.target == platform->uriListID) {
                 char *copy      = (char *)UI_MALLOC(count);
                 int   fileCount = 0;
 
@@ -714,7 +775,7 @@ bool _UIProcessEvent(XEvent *event)
 
                 UI_FREE(files);
                 UI_FREE(copy);
-            } else if (event->xselection.target == ui.plainTextID) {
+            } else if (event->xselection.target == platform->plainTextID) {
                 // TODO.
             }
         }
@@ -723,53 +784,55 @@ bool _UIProcessEvent(XEvent *event)
 
         XClientMessageEvent m = {0};
         m.type                = ClientMessage;
-        m.display             = ui.display;
-        m.window              = window->dragSource;
-        m.message_type        = ui.dndFinishedID;
+        m.display             = platform->display;
+        m.window              = window->window.dragSource;
+        m.message_type        = platform->dndFinishedID;
         m.format              = 32;
-        m.data.l[0]           = window->window;
+        m.data.l[0]           = window->window.window;
         m.data.l[1]           = true;
-        m.data.l[2]           = ui.dndActionCopyID;
-        XSendEvent(ui.display, m.window, False, NoEventMask, (XEvent *)&m);
-        XFlush(ui.display);
+        m.data.l[2]           = platform->dndActionCopyID;
+        XSendEvent(platform->display, m.window, False, NoEventMask, (XEvent *)&m);
+        XFlush(platform->display);
 
-        window->dragSource = 0; // Drag complete.
+        window->window.dragSource = 0; // Drag complete.
         _UIUpdate();
     } else if (event->type == SelectionRequest) {
         // printf("SelectionRequest\n");
         UIWindow *window = _UIFindWindow(event->xclient.window);
         if (!window)
             return false;
-        if (XGetSelectionOwner(ui.display, event->xselectionrequest.selection) != window->window)
+        if (XGetSelectionOwner(platform->display, event->xselectionrequest.selection) !=
+            window->window.window)
             return false;
         XSelectionRequestEvent requestEvent         = event->xselectionrequest;
         int                    changePropertyResult = 0;
 
-        if (event->xselectionrequest.selection == ui.dndSelectionID) {
-            if (requestEvent.target == ui.uriListID) {
+        if (event->xselectionrequest.selection == platform->dndSelectionID) {
+            if (requestEvent.target == platform->uriListID) {
                 changePropertyResult = XChangeProperty(
                     requestEvent.display, requestEvent.requestor, requestEvent.property,
-                    requestEvent.target, 8, PropModeReplace, (const unsigned char *)window->uriList,
-                    strlen(window->uriList));
-            } else if (requestEvent.target == ui.targetID) {
+                    requestEvent.target, 8, PropModeReplace,
+                    (const unsigned char *)window->window.uriList, strlen(window->window.uriList));
+            } else if (requestEvent.target == platform->targetID) {
                 changePropertyResult = XChangeProperty(
                     requestEvent.display, requestEvent.requestor, requestEvent.property, XA_ATOM,
-                    32, PropModeReplace, (unsigned char *)&ui.uriListID, 1);
+                    32, PropModeReplace, (unsigned char *)&platform->uriListID, 1);
             }
-        } else if (event->xselectionrequest.selection == ui.clipboardID) {
-            Atom utf8ID = XInternAtom(ui.display, "UTF8_STRING", 1);
+        } else if (event->xselectionrequest.selection == platform->clipboardID) {
+            Atom utf8ID = XInternAtom(platform->display, "UTF8_STRING", 1);
             if (utf8ID == None)
                 utf8ID = XA_STRING;
 
             Atom type = requestEvent.target;
-            type      = (type == ui.textID) ? XA_STRING : type;
+            type      = (type == platform->textID) ? XA_STRING : type;
 
-            if (requestEvent.target == XA_STRING || requestEvent.target == ui.textID ||
+            if (requestEvent.target == XA_STRING || requestEvent.target == platform->textID ||
                 requestEvent.target == utf8ID) {
                 changePropertyResult = XChangeProperty(
                     requestEvent.display, requestEvent.requestor, requestEvent.property, type, 8,
-                    PropModeReplace, (const unsigned char *)ui.pasteText, strlen(ui.pasteText));
-            } else if (requestEvent.target == ui.targetID) {
+                    PropModeReplace, (const unsigned char *)platform->pasteText,
+                    strlen(platform->pasteText));
+            } else if (requestEvent.target == platform->targetID) {
                 changePropertyResult = XChangeProperty(
                     requestEvent.display, requestEvent.requestor, requestEvent.property, XA_ATOM,
                     32, PropModeReplace, (unsigned char *)&utf8ID, 1);
@@ -789,7 +852,7 @@ bool _UIProcessEvent(XEvent *event)
                                          .property   = requestEvent.property,
                                          .time       = requestEvent.time};
 
-            XSendEvent(ui.display, requestEvent.requestor, 0, 0, (XEvent *)&sendEvent);
+            XSendEvent(platform->display, requestEvent.requestor, 0, 0, (XEvent *)&sendEvent);
         }
     }
 
@@ -804,24 +867,26 @@ typedef struct UIEpollDispatchPtr {
 
 bool _UIMessageLoopSingle(int *result)
 {
+    const UI_Platform *platform = ui.platform;
+
     XEvent events[64];
 
     if (ui.animatingCount) {
-        if (XPending(ui.display)) {
-            XNextEvent(ui.display, events + 0);
+        if (XPending(platform->display)) {
+            XNextEvent(platform->display, events + 0);
         } else {
             _UIProcessAnimations();
             return true;
         }
-    } else if (XPending(ui.display)) {
-        XNextEvent(ui.display, events + 0);
+    } else if (XPending(platform->display)) {
+        XNextEvent(platform->display, events + 0);
     } else {
         struct epoll_event event;
-        int                count = epoll_wait(ui.epollFD, &event, 1, -1);
+        int                count = epoll_wait(platform->epollFD, &event, 1, -1);
 
         if (count != 1) {
-        } else if (event.data.ptr == &ui.display) {
-            XNextEvent(ui.display, events + 0);
+        } else if (event.data.ptr == &platform->display) {
+            XNextEvent(platform->display, events + 0);
         } else {
             UIEpollDispatchPtr *ptr = (UIEpollDispatchPtr *)event.data.ptr;
             ptr->fp(ptr);
@@ -834,8 +899,8 @@ bool _UIMessageLoopSingle(int *result)
 
     int configureIndex = -1, motionIndex = -1, exposeIndex = -1;
 
-    while (p < 64 && XPending(ui.display)) {
-        XNextEvent(ui.display, events + p);
+    while (p < 64 && XPending(platform->display)) {
+        XNextEvent(platform->display, events + p);
 
 # define _UI_MERGE_EVENTS(a, b)                                                                    \
      if (events[p].type == a) {                                                                    \
@@ -864,28 +929,31 @@ bool _UIMessageLoopSingle(int *result)
     return true;
 }
 
+
 void UIDragFilesStart(UIWindow *window, const char **paths, size_t count)
 {
-    if (window->inDrag) {
+    const UI_Platform *platform = ui.platform;
+
+    if (window->window.inDrag) {
         return;
     }
-    UI_FREE(window->uriList);
+    UI_FREE(window->window.uriList);
 
     for (uintptr_t pass = 0, size = 0; pass < 2; pass++) {
         if (pass) {
-            window->uriList = UI_MALLOC(size + 1);
-            size            = 0;
+            window->window.uriList = UI_MALLOC(size + 1);
+            size                   = 0;
         }
 
         for (uintptr_t i = 0; i < count; i++) {
             if (pass) {
-                window->uriList[size + 0] = 'f';
-                window->uriList[size + 1] = 'i';
-                window->uriList[size + 2] = 'l';
-                window->uriList[size + 3] = 'e';
-                window->uriList[size + 4] = ':';
-                window->uriList[size + 5] = '/';
-                window->uriList[size + 6] = '/';
+                window->window.uriList[size + 0] = 'f';
+                window->window.uriList[size + 1] = 'i';
+                window->window.uriList[size + 2] = 'l';
+                window->window.uriList[size + 3] = 'e';
+                window->window.uriList[size + 4] = ':';
+                window->window.uriList[size + 5] = '/';
+                window->window.uriList[size + 6] = '/';
             }
 
             size += 7;
@@ -898,16 +966,16 @@ void UIDragFilesStart(UIWindow *window, const char **paths, size_t count)
                     c == '[' || c == ']' || c == '\'' || c == ';' || c == '?' || c == ':' ||
                     c == '@' || c == '=' || c == '&' || c == '$' || c < 0x20) {
                     if (pass) {
-                        const char *hexChars      = "0123456789ABCDEF";
-                        window->uriList[size + 0] = '%';
-                        window->uriList[size + 1] = hexChars[(c & 0xF0) >> 4];
-                        window->uriList[size + 2] = hexChars[c & 0x0F];
+                        const char *hexChars             = "0123456789ABCDEF";
+                        window->window.uriList[size + 0] = '%';
+                        window->window.uriList[size + 1] = hexChars[(c & 0xF0) >> 4];
+                        window->window.uriList[size + 2] = hexChars[c & 0x0F];
                     }
 
                     size += 3;
                 } else {
                     if (pass) {
-                        window->uriList[size + 0] = c;
+                        window->window.uriList[size + 0] = c;
                     }
 
                     size++;
@@ -915,54 +983,58 @@ void UIDragFilesStart(UIWindow *window, const char **paths, size_t count)
             }
 
             if (pass) {
-                window->uriList[size + 0] = '\r';
-                window->uriList[size + 1] = '\n';
+                window->window.uriList[size + 0] = '\r';
+                window->window.uriList[size + 1] = '\n';
             }
 
             size += 2;
         }
 
         if (pass) {
-            window->uriList[size] = 0;
+            window->window.uriList[size] = 0;
         }
     }
 
-    XChangeProperty(ui.display, window->window, ui.dndTypeListID, XA_ATOM, 32, PropModeReplace,
-                    (uint8_t *)&ui.uriListID, sizeof(Atom));
-    XSetSelectionOwner(ui.display, ui.dndSelectionID, window->window, CurrentTime);
-    window->inDrag                 = true;
-    window->dragDestination        = None;
-    window->dragDestinationVersion = -1;
-    window->dragDestinationCanDrop = false;
+    XChangeProperty(platform->display, window->window.window, platform->dndTypeListID, XA_ATOM, 32,
+                    PropModeReplace, (uint8_t *)&platform->uriListID, sizeof(Atom));
+    XSetSelectionOwner(platform->display, platform->dndSelectionID, window->window.window,
+                       CurrentTime);
+    window->window.inDrag                 = true;
+    window->window.dragDestination        = None;
+    window->window.dragDestinationVersion = -1;
+    window->window.dragDestinationCanDrop = false;
 }
+
 
 void UIEpollAdd(int fd, UIEpollDispatchPtr *ptr)
 {
     struct epoll_event event = {};
     event.events             = EPOLLIN;
     event.data.ptr           = ptr;
-    bool success             = 0 == epoll_ctl(ui.epollFD, EPOLL_CTL_ADD, fd, &event);
+    bool success             = 0 == epoll_ctl(ui.platform->epollFD, EPOLL_CTL_ADD, fd, &event);
     UI_ASSERT(success);
 }
 
 
 void UIEpollRemove(int fd)
 {
-    bool success = 0 == epoll_ctl(ui.epollFD, EPOLL_CTL_DEL, fd, NULL);
+    bool success = 0 == epoll_ctl(ui.platform->epollFD, EPOLL_CTL_DEL, fd, NULL);
     UI_ASSERT(success);
 }
 
 
 void UIWindowPostMessage(UIWindow *window, UIMessage message, void *_dp)
 {
+    const UI_Platform *platform = ui.platform;
+
     // HACK! Xlib doesn't seem to have a nice way to do this,
     // so send a specially crafted key press event instead.
     // TODO Maybe ClientMessage is what this should use?
     uintptr_t dp    = (uintptr_t)_dp;
     XKeyEvent event = {0};
-    event.display   = ui.display;
-    event.window    = window->window;
-    event.root      = DefaultRootWindow(ui.display);
+    event.display   = platform->display;
+    event.window    = window->window.window;
+    event.root      = DefaultRootWindow(platform->display);
     event.subwindow = None;
 # if INTPTR_MAX == INT64_MAX
     event.time = dp >> 32;
@@ -975,7 +1047,7 @@ void UIWindowPostMessage(UIWindow *window, UIMessage message, void *_dp)
     event.keycode     = 1;
     event.state       = message;
     event.type        = KeyPress;
-    XSendEvent(ui.display, window->window, True, KeyPressMask, (XEvent *)&event);
-    XFlush(ui.display);
+    XSendEvent(platform->display, window->window.window, True, KeyPressMask, (XEvent *)&event);
+    XFlush(platform->display);
 }
 #endif // UI_LINUX

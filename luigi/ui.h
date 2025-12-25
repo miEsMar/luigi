@@ -8,7 +8,6 @@ extern "C" {
 
 
 #include "font.h"
-#include "ui_cursor.h"
 #include "ui_element.h"
 #include "ui_theme.h"
 #include "ui_window.h"
@@ -29,6 +28,9 @@ extern struct Luigi ui;
 
 
 struct Luigi {
+    UI_Platform       *platform;
+    UI_PlatformWindow *window;
+
     UIWindow *windows;
     UITheme   theme;
 
@@ -44,53 +46,17 @@ struct Luigi {
     bool        dialogCanExit;
 
     UIFont *activeFont;
-
-#ifdef UI_LINUX
-    Display *display;
-    Visual  *visual;
-    XIM      xim;
-    Atom     windowClosedID, primaryID, uriListID, plainTextID;
-    Atom     dndEnterID, dndLeaveID, dndTypeListID, dndPositionID, dndStatusID, dndActionCopyID,
-        dndDropID, dndSelectionID, dndFinishedID, dndAwareID;
-    Atom   clipboardID, xSelectionDataID, textID, targetID, incrID;
-    Cursor cursors[UI_CURSOR_COUNT];
-    char  *pasteText;
-    XEvent copyEvent;
-    int    epollFD;
-#endif
-
-#ifdef UI_WINDOWS
-    HCURSOR cursors[UI_CURSOR_COUNT];
-    HANDLE  heap;
-    bool    assertionFailure;
-#endif
-
-#ifdef UI_ESSENCE
-    EsInstance *instance;
-#endif
-
-#if defined(UI_ESSENCE) || defined(UI_COCOA)
-    void     *menuData[256]; // HACK This limits the number of menu items to 128.
-    uintptr_t menuIndex;
-#endif
-
-#ifdef UI_COCOA
-    int       menuX, menuY;
-    UIWindow *menuWindow;
-#endif
-
-#ifdef UI_FREETYPE
-    FT_Library ft;
-#endif
 };
 
 
 //
 
 
+void Luigi_Init(void);
+
+
 void _UIInitialiseCommon(void);
 void _UIUpdate(void);
-bool _UIDestroy(UIElement *element);
 
 
 //

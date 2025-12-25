@@ -20,7 +20,13 @@ extern "C" {
 # include <ft2build.h>
 # include FT_FREETYPE_H
 # include <freetype/ftbitmap.h>
+
+
+extern FT_Library ft;
 #endif
+
+
+#define UI_FONT_LOAD_DEFAULT() UIFontActivate(UIFontCreate(0, 0))
 
 
 typedef struct UIFont {

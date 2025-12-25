@@ -74,32 +74,7 @@ typedef struct UIWindow {
     float lastFullFillCount;
 #endif
 
-#ifdef UI_LINUX
-    Window   window;
-    XImage  *image;
-    XIC      xic;
-    unsigned ctrlCode, shiftCode, altCode;
-    Window   dragSource, dragDestination;
-    int      dragDestinationVersion;
-    bool     inDrag, dragDestinationCanDrop;
-    char    *uriList;
-#endif
-
-#ifdef UI_WINDOWS
-    HWND hwnd;
-    bool trackingLeave;
-#endif
-
-#ifdef UI_ESSENCE
-    EsWindow  *window;
-    EsElement *canvas;
-    int        cursor;
-#endif
-
-#ifdef UI_COCOA
-    NSWindow *window;
-    void     *view;
-#endif
+    UI_PlatformWindow window;
 } UIWindow;
 
 

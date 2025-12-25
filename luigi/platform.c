@@ -1,7 +1,8 @@
 #include "platform.h"
 
 #ifdef UI_LINUX
-# include "platforms/linux.c"
+# include "platforms/x11.c"
+# include "platforms/x11_clipboard.c"
 #endif // UI_LINUX
 #ifdef UI_WINDOWS
 # include "platforms/windows.c"

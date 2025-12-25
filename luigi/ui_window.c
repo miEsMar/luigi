@@ -1,13 +1,8 @@
 #include "ui_window.h"
-#include "font.h"
 #include "inspector.h"
 #include "ui.h"
-#include "ui_animation.h"
 #include "ui_event.h"
-#include "ui_key.h"
-#include "ui_menu.h"
 #include "ui_painter.h"
-#include "ui_theme.h"
 #include "utils.h"
 
 
@@ -21,18 +16,13 @@
 
 void _UIWindowEndPaint(UIWindow *window, UIPainter *painter)
 {
-    (void)painter;
-
-    XPutImage(ui.display, window->window, DefaultGC(ui.display, 0), window->image,
-              UI_RECT_TOP_LEFT(window->updateRegion), UI_RECT_TOP_LEFT(window->updateRegion),
-              UI_RECT_SIZE(window->updateRegion));
+    UI_Platform_render(window, painter);
+    return;
 }
 
 void _UIWindowGetScreenPosition(UIWindow *window, int *_x, int *_y)
 {
-    Window child;
-    XTranslateCoordinates(ui.display, window->window, DefaultRootWindow(ui.display), 0, 0, _x, _y,
-                          &child);
+    UI_Platform_get_screen_pos(window, _x, _y);
 }
 
 
