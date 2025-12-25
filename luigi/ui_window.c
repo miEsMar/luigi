@@ -139,6 +139,7 @@ UIWindow *_UIFindWindow(Window window)
     return NULL;
 }
 
+
 void UIInitialise()
 {
     _UIInitialiseCommon();
@@ -300,12 +301,14 @@ void UIMenuShow(UIMenu *menu)
                       height);
 }
 
+
 void UIWindowPack(UIWindow *window, int _width)
 {
     int width  = _width ? _width : UIElementMessage(window->e.children[0], UI_MSG_GET_WIDTH, 0, 0);
     int height = UIElementMessage(window->e.children[0], UI_MSG_GET_HEIGHT, width, 0);
     XResizeWindow(ui.display, window->window, width, height);
 }
+
 
 bool _UIProcessEvent(XEvent *event)
 {
@@ -803,6 +806,7 @@ bool _UIProcessEvent(XEvent *event)
 
     return false;
 }
+
 
 typedef struct UIEpollDispatchPtr {
     void (*fp)(struct UIEpollDispatchPtr *ptr);
