@@ -1,7 +1,11 @@
+#define UI_INTERNALS
 #include "ui_event.h"
 #include "ui.h"
 #include "ui_menu.h"
 #include "ui_window.h"
+
+
+//
 
 
 bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)

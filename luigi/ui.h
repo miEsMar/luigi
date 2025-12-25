@@ -108,14 +108,11 @@ struct Luigi {
 };
 
 
-//
-
-
-//
-
-
+#ifdef UI_INTERNALS
 void _UIUpdate(void);
 bool _UIDestroy(UIElement *element);
+#endif
+
 
 //
 

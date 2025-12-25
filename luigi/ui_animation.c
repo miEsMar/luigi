@@ -1,3 +1,4 @@
+#define UI_INTERNALS
 #include "ui_animation.h"
 #include "ui.h"
 #include "utils.h"
@@ -38,6 +39,7 @@ uint64_t UIAnimateClock(void)
     // c
     return (uint64_t)UI_CLOCK() * 1000 / UI_CLOCKS_PER_SECOND;
 }
+
 
 void _UIProcessAnimations(void)
 {

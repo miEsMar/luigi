@@ -1,3 +1,4 @@
+#define UI_INTERNALS
 #include "ui_dialog.h"
 #include "ui.h"
 #include "ui_button.h"
