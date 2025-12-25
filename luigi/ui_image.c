@@ -1,6 +1,12 @@
 #include "ui_image.h"
+#include "ui_event.h"
 #include "ui_window.h"
 #include "utils.h"
+
+
+#ifdef UI_AVX512
+# include <immintrin.h>
+#endif
 
 
 void _UIImageDisplayUpdateViewport(UIImageDisplay *display)
@@ -30,9 +36,9 @@ void _UIImageDisplayUpdateViewport(UIImageDisplay *display)
         display->panY = display->height - bounds.b / display->zoom;
 
     if (bounds.r && display->width * display->zoom <= bounds.r)
-        display->panX = display->width / 2 - bounds.r / display->zoom / 2;
+        display->panX = ((float)display->width / 2) - bounds.r / display->zoom / 2;
     if (bounds.b && display->height * display->zoom <= bounds.b)
-        display->panY = display->height / 2 - bounds.b / display->zoom / 2;
+        display->panY = ((float)display->height / 2) - bounds.b / display->zoom / 2;
 }
 
 

@@ -6,6 +6,11 @@
 #include "utils.h"
 
 
+#ifdef UI_SSE2
+# include <xmmintrin.h>
+#endif
+
+
 //
 
 

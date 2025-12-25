@@ -6,10 +6,6 @@
 #include <stdint.h>
 
 
-/////////////////////////////////////////
-// Font handling.
-/////////////////////////////////////////
-
 // Taken from https://commons.wikimedia.org/wiki/File:Codepage-437.png
 // Public domain.
 
@@ -224,7 +220,9 @@ UIFont *UIFontCreate(const char *cPath, uint32_t size)
 {
     UIFont *font = (UIFont *)UI_CALLOC(sizeof(UIFont));
 
-#ifdef UI_FREETYPE
+#ifndef UI_FREETYPE
+    (void)cPath;
+#else
 # ifdef UI_UNICODE
     font->glyphs         = (FT_Bitmap *)UI_CALLOC(sizeof(FT_Bitmap) * (_UNICODE_MAX_CODEPOINT + 1));
     font->glyphsRendered = (bool *)UI_CALLOC(sizeof(bool) * (_UNICODE_MAX_CODEPOINT + 1));

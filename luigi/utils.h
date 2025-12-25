@@ -17,16 +17,12 @@ extern "C" {
 # include <math.h>
 # include <stdlib.h>
 # include <string.h>
-# include <time.h>
 
-# define UI_ASSERT            assert
-# define UI_CALLOC(x)         calloc(1, (x))
-# define UI_FREE              free
-# define UI_MALLOC            malloc
-# define UI_REALLOC           realloc
-# define UI_CLOCK             _UIClock
-# define UI_CLOCKS_PER_SECOND 1000
-# define UI_CLOCK_T           clock_t
+# define UI_ASSERT    assert
+# define UI_CALLOC(x) calloc(1, (x))
+# define UI_FREE      free
+# define UI_MALLOC    malloc
+# define UI_REALLOC   realloc
 # define UI_MEMMOVE(d, s, n)                                                                       \
      do {                                                                                          \
          size_t _n = n;                                                                            \
@@ -39,15 +35,12 @@ extern "C" {
 #if defined(UI_ESSENCE)
 # include <essence.h>
 
-# define UI_ASSERT            EsAssert
-# define UI_CALLOC(x)         EsHeapAllocate((x), true)
-# define UI_FREE              EsHeapFree
-# define UI_MALLOC(x)         EsHeapAllocate((x), false)
-# define UI_REALLOC(x, y)     EsHeapReallocate((x), (y), false)
-# define UI_CLOCK             EsTimeStampMs
-# define UI_CLOCKS_PER_SECOND 1000
-# define UI_CLOCK_T           uint64_t
-# define UI_MEMMOVE           EsCRTmemmove
+# define UI_ASSERT        EsAssert
+# define UI_CALLOC(x)     EsHeapAllocate((x), true)
+# define UI_FREE          EsHeapFree
+# define UI_MALLOC(x)     EsHeapAllocate((x), false)
+# define UI_REALLOC(x, y) EsHeapReallocate((x), (y), false)
+# define UI_MEMMOVE       EsCRTmemmove
 
 // Callback to allow the application to process messages.
 void _UIMessageProcess(EsMessage *message);

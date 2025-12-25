@@ -56,6 +56,7 @@ extern "C" {
 # include "luigi/font.c"
 # include "luigi/inspector.c"
 # include "luigi/mdi.c"
+# include "luigi/platform.c"
 # include "luigi/ui.c"
 # include "luigi/ui_animation.c"
 # include "luigi/ui_button.c"

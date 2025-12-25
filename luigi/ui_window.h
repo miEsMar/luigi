@@ -7,22 +7,10 @@ extern "C" {
 #endif
 
 
+#include "platform.h"
 #include "ui_element.h"
 #include "ui_painter.h"
 #include "ui_shortcut.h"
-
-#ifdef UI_LINUX
-# include <X11/Xatom.h>
-# include <X11/Xlib.h>
-# include <X11/Xutil.h>
-# include <X11/cursorfont.h>
-# include <sys/epoll.h>
-#endif
-#ifdef UI_COCOA
-# import <Carbon/Carbon.h>
-# import <Cocoa/Cocoa.h>
-# import <Foundation/Foundation.h>
-#endif
 
 
 typedef struct UIMenu UIMenu;
