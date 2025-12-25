@@ -9,28 +9,12 @@ extern "C" {
 
 #include "font.h"
 #include "ui_code.h"
+#include "ui_cursor.h"
 #include "ui_element.h"
 #include "ui_table.h"
 #include "ui_theme.h"
 #include "ui_window.h"
 
-
-#define UI_CURSOR_ARROW             (0)
-#define UI_CURSOR_TEXT              (1)
-#define UI_CURSOR_SPLIT_V           (2)
-#define UI_CURSOR_SPLIT_H           (3)
-#define UI_CURSOR_FLIPPED_ARROW     (4)
-#define UI_CURSOR_CROSS_HAIR        (5)
-#define UI_CURSOR_HAND              (6)
-#define UI_CURSOR_RESIZE_UP         (7)
-#define UI_CURSOR_RESIZE_LEFT       (8)
-#define UI_CURSOR_RESIZE_UP_RIGHT   (9)
-#define UI_CURSOR_RESIZE_UP_LEFT    (10)
-#define UI_CURSOR_RESIZE_DOWN       (11)
-#define UI_CURSOR_RESIZE_RIGHT      (12)
-#define UI_CURSOR_RESIZE_DOWN_RIGHT (13)
-#define UI_CURSOR_RESIZE_DOWN_LEFT  (14)
-#define UI_CURSOR_COUNT             (15)
 
 #define UI_ALIGN_LEFT   (1)
 #define UI_ALIGN_RIGHT  (2)

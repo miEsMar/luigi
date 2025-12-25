@@ -1,4 +1,5 @@
 #include "ui_textbox.h"
+#include "ui_cursor.h"
 #include "ui_window.h"
 #include "utils.h"
 

@@ -1,4 +1,3 @@
-#define UI_INTERNALS
 #include "../inspector.h"
 #include "../ui.h"
 #include "../ui_animation.h"
