@@ -10,8 +10,10 @@ extern "C" {
 #include "ui_element.h"
 
 
-typedef struct UIColorPicker {
 #define UI_COLOR_PICKER_HAS_OPACITY (1 << 0)
+
+
+typedef struct UIColorPicker {
     UIElement e;
     float     hue, saturation, value, opacity;
 } UIColorPicker;

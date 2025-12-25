@@ -1,9 +1,13 @@
 #include "ui_theme.h"
 
 
-/////////////////////////////////////////
-// Themes.
-/////////////////////////////////////////
+const char *themeItems[] = {
+    "panel1",           "panel2",        "selected",       "border",        "text",
+    "textDisabled",     "textSelected",  "buttonNormal",   "buttonHovered", "buttonPressed",
+    "buttonDisabled",   "textboxNormal", "textboxFocused", "codeFocused",   "codeBackground",
+    "codeDefault",      "codeComment",   "codeString",     "codeNumber",    "codeOperator",
+    "codePreprocessor", "accent1",       "accent2",
+};
 
 
 UITheme uiThemeClassic = {
