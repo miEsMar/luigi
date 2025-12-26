@@ -17,8 +17,10 @@ void Luigi_Init(void)
     //     goto ret_;
     // }
 
-    ui.theme = uiThemeDark;
 
+    ui.platform = UI_PlatformInit();
+
+    ui.theme = uiThemeDark;
 
 #ifdef UI_FREETYPE
     FT_Init_FreeType(&ui.ft);
@@ -26,8 +28,6 @@ void Luigi_Init(void)
 #else
     UI_FONT_LOAD_DEFAULT();
 #endif
-
-    ui.platform = UI_PlatformInit();
 
     return;
 }

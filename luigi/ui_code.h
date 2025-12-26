@@ -8,6 +8,7 @@ extern "C" {
 
 
 #include "font.h"
+#include "timing.h"
 #include "ui_element.h"
 #include "ui_painter.h"
 #include "ui_rect.h"

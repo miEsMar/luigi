@@ -3,6 +3,7 @@
 #include "ui_window.h"
 #include "utils.h"
 
+#include <math.h>
 
 #ifdef UI_AVX512
 # include <immintrin.h>

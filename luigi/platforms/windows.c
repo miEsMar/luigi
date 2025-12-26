@@ -1,9 +1,12 @@
+#include "../inspector.h"
 #include "../platform.h"
-
-
-#ifdef UI_WINDOWS
-void *_UIHeapReAlloc(void *pointer, size_t size);
-void *_UIMemmove(void *dest, const void *src, size_t n);
+#include "../ui.h"
+#include "../ui_animation.h"
+#include "../ui_event.h"
+#include "../ui_key.h"
+#include "../ui_menu.h"
+#include "../ui_window.h"
+#include "../utils.h"
 
 
 const int UI_KEYCODE_A         = 'A';
@@ -25,23 +28,20 @@ const int UI_KEYCODE_INSERT    = VK_INSERT;
 const int UI_KEYCODE_PAGE_UP   = VK_PRIOR;
 const int UI_KEYCODE_PAGE_DOWN = VK_NEXT;
 
-int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
-{
-    if (message == UI_MSG_DEALLOCATE) {
-        UIWindow *window = (UIWindow *)element;
-        _UIWindowDestroyCommon(window);
-        SetWindowLongPtr(window->hwnd, GWLP_USERDATA, 0);
-        DestroyWindow(window->hwnd);
-    }
 
-    return _UIWindowMessageCommon(element, message, di, dp);
-}
+HANDLE win_heap = {0};
 
-LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+
+//
+
+
+static LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    const UI_Platform *platform = ui.platform;
+
     UIWindow *window = (UIWindow *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
-    if (!window || ui.assertionFailure) {
+    if (!window || platform->assertionFailure) {
         return DefWindowProc(hwnd, message, wParam, lParam);
     }
 
@@ -63,12 +63,12 @@ LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPAR
         UIElementRelayout(&window->e);
         _UIUpdate();
     } else if (message == WM_MOUSEMOVE) {
-        if (!window->trackingLeave) {
-            window->trackingLeave = true;
-            TRACKMOUSEEVENT leave = {0};
-            leave.cbSize          = sizeof(TRACKMOUSEEVENT);
-            leave.dwFlags         = TME_LEAVE;
-            leave.hwndTrack       = hwnd;
+        if (!window->window.trackingLeave) {
+            window->window.trackingLeave = true;
+            TRACKMOUSEEVENT leave        = {0};
+            leave.cbSize                 = sizeof(TRACKMOUSEEVENT);
+            leave.dwFlags                = TME_LEAVE;
+            leave.hwndTrack              = hwnd;
             TrackMouseEvent(&leave);
         }
 
@@ -79,7 +79,7 @@ LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPAR
         window->cursorY = cursor.y;
         _UIWindowInputEvent(window, UI_MSG_MOUSE_MOVE, 0, 0);
     } else if (message == WM_MOUSELEAVE) {
-        window->trackingLeave = false;
+        window->window.trackingLeave = false;
 
         if (!window->pressed) {
             window->cursorX = -1;
@@ -137,7 +137,7 @@ LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPAR
                       DIB_RGB_COLORS, SRCCOPY);
         EndPaint(hwnd, &paint);
     } else if (message == WM_SETCURSOR && LOWORD(lParam) == HTCLIENT) {
-        SetCursor(ui.cursors[window->cursorStyle]);
+        SetCursor(platform->cursors[window->cursorStyle]);
         return 1;
     } else if (message == WM_SETFOCUS || message == WM_KILLFOCUS) {
         _UIMenusClose();
@@ -185,25 +185,33 @@ LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPAR
 }
 
 
+//
+
+
 UI_Platform *UI_PlatformInit(void)
 {
-    ui.heap = GetProcessHeap();
+    UI_Platform *platform = calloc(1, sizeof(*platform));
+    if (NULL == platform) {
+        return NULL;
+    }
 
-    ui.cursors[UI_CURSOR_ARROW]             = LoadCursor(NULL, IDC_ARROW);
-    ui.cursors[UI_CURSOR_TEXT]              = LoadCursor(NULL, IDC_IBEAM);
-    ui.cursors[UI_CURSOR_SPLIT_V]           = LoadCursor(NULL, IDC_SIZENS);
-    ui.cursors[UI_CURSOR_SPLIT_H]           = LoadCursor(NULL, IDC_SIZEWE);
-    ui.cursors[UI_CURSOR_FLIPPED_ARROW]     = LoadCursor(NULL, IDC_ARROW);
-    ui.cursors[UI_CURSOR_CROSS_HAIR]        = LoadCursor(NULL, IDC_CROSS);
-    ui.cursors[UI_CURSOR_HAND]              = LoadCursor(NULL, IDC_HAND);
-    ui.cursors[UI_CURSOR_RESIZE_UP]         = LoadCursor(NULL, IDC_SIZENS);
-    ui.cursors[UI_CURSOR_RESIZE_LEFT]       = LoadCursor(NULL, IDC_SIZEWE);
-    ui.cursors[UI_CURSOR_RESIZE_UP_RIGHT]   = LoadCursor(NULL, IDC_SIZENESW);
-    ui.cursors[UI_CURSOR_RESIZE_UP_LEFT]    = LoadCursor(NULL, IDC_SIZENWSE);
-    ui.cursors[UI_CURSOR_RESIZE_DOWN]       = LoadCursor(NULL, IDC_SIZENS);
-    ui.cursors[UI_CURSOR_RESIZE_RIGHT]      = LoadCursor(NULL, IDC_SIZEWE);
-    ui.cursors[UI_CURSOR_RESIZE_DOWN_LEFT]  = LoadCursor(NULL, IDC_SIZENESW);
-    ui.cursors[UI_CURSOR_RESIZE_DOWN_RIGHT] = LoadCursor(NULL, IDC_SIZENWSE);
+    win_heap = GetProcessHeap();
+
+    platform->cursors[UI_CURSOR_ARROW]             = LoadCursor(NULL, IDC_ARROW);
+    platform->cursors[UI_CURSOR_TEXT]              = LoadCursor(NULL, IDC_IBEAM);
+    platform->cursors[UI_CURSOR_SPLIT_V]           = LoadCursor(NULL, IDC_SIZENS);
+    platform->cursors[UI_CURSOR_SPLIT_H]           = LoadCursor(NULL, IDC_SIZEWE);
+    platform->cursors[UI_CURSOR_FLIPPED_ARROW]     = LoadCursor(NULL, IDC_ARROW);
+    platform->cursors[UI_CURSOR_CROSS_HAIR]        = LoadCursor(NULL, IDC_CROSS);
+    platform->cursors[UI_CURSOR_HAND]              = LoadCursor(NULL, IDC_HAND);
+    platform->cursors[UI_CURSOR_RESIZE_UP]         = LoadCursor(NULL, IDC_SIZENS);
+    platform->cursors[UI_CURSOR_RESIZE_LEFT]       = LoadCursor(NULL, IDC_SIZEWE);
+    platform->cursors[UI_CURSOR_RESIZE_UP_RIGHT]   = LoadCursor(NULL, IDC_SIZENESW);
+    platform->cursors[UI_CURSOR_RESIZE_UP_LEFT]    = LoadCursor(NULL, IDC_SIZENWSE);
+    platform->cursors[UI_CURSOR_RESIZE_DOWN]       = LoadCursor(NULL, IDC_SIZENS);
+    platform->cursors[UI_CURSOR_RESIZE_RIGHT]      = LoadCursor(NULL, IDC_SIZEWE);
+    platform->cursors[UI_CURSOR_RESIZE_DOWN_LEFT]  = LoadCursor(NULL, IDC_SIZENESW);
+    platform->cursors[UI_CURSOR_RESIZE_DOWN_RIGHT] = LoadCursor(NULL, IDC_SIZENWSE);
 
     WNDCLASS windowClass      = {0};
     windowClass.lpfnWndProc   = _UIWindowProcedure;
@@ -212,7 +220,27 @@ UI_Platform *UI_PlatformInit(void)
     windowClass.style |= CS_DROPSHADOW;
     windowClass.lpszClassName = "shadow";
     RegisterClass(&windowClass);
+
+    return platform;
 }
+
+
+//
+
+
+int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
+{
+    const UI_Platform *platform = ui.platform;
+    if (message == UI_MSG_DEALLOCATE) {
+        UIWindow *window = (UIWindow *)element;
+        _UIWindowDestroyCommon(window);
+        SetWindowLongPtr(window->window.hwnd, GWLP_USERDATA, 0);
+        DestroyWindow(window->window.hwnd);
+    }
+
+    return _UIWindowMessageCommon(element, message, di, dp);
+}
+
 
 bool _UIMessageLoopSingle(int *result)
 {
@@ -243,13 +271,15 @@ bool _UIMessageLoopSingle(int *result)
     return true;
 }
 
+
 void UIMenuShow(UIMenu *menu)
 {
     int width, height;
     _UIMenuPrepare(menu, &width, &height);
-    MoveWindow(menu->e.window->hwnd, menu->pointX, menu->pointY, width, height, FALSE);
-    ShowWindow(menu->e.window->hwnd, SW_SHOWNOACTIVATE);
+    MoveWindow(menu->e.window->window.hwnd, menu->pointX, menu->pointY, width, height, FALSE);
+    ShowWindow(menu->e.window->window.hwnd, SW_SHOWNOACTIVATE);
 }
+
 
 UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int width, int height)
 {
@@ -264,28 +294,30 @@ UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, in
     if (flags & UI_WINDOW_MENU) {
         UI_ASSERT(owner);
 
-        window->hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_NOACTIVATE, "shadow", 0, WS_POPUP, 0, 0,
-                                      0, 0, owner->hwnd, NULL, NULL, NULL);
+        window->window.hwnd =
+            CreateWindowEx(WS_EX_TOPMOST | WS_EX_NOACTIVATE, "shadow", 0, WS_POPUP, 0, 0, 0, 0,
+                           owner->window.hwnd, NULL, NULL, NULL);
     } else {
-        window->hwnd = CreateWindowEx(WS_EX_ACCEPTFILES, "normal", cTitle, WS_OVERLAPPEDWINDOW,
-                                      CW_USEDEFAULT, CW_USEDEFAULT, width ? width : CW_USEDEFAULT,
-                                      height ? height : CW_USEDEFAULT, owner ? owner->hwnd : NULL,
-                                      NULL, NULL, NULL);
+        window->window.hwnd = CreateWindowEx(
+            WS_EX_ACCEPTFILES, "normal", cTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+            width ? width : CW_USEDEFAULT, height ? height : CW_USEDEFAULT,
+            owner ? owner->window.hwnd : NULL, NULL, NULL, NULL);
     }
 
-    SetWindowLongPtr(window->hwnd, GWLP_USERDATA, (LONG_PTR)window);
+    SetWindowLongPtr(window->window.hwnd, GWLP_USERDATA, (LONG_PTR)window);
 
     if (~flags & UI_WINDOW_MENU) {
-        ShowWindow(window->hwnd, SW_SHOW);
-        PostMessage(window->hwnd, WM_SIZE, 0, 0);
+        ShowWindow(window->window.hwnd, SW_SHOW);
+        PostMessage(window->window.hwnd, WM_SIZE, 0, 0);
     }
 
     return window;
 }
 
-void _UIWindowEndPaint(UIWindow *window, UIPainter *painter)
+
+void UI_Platform_render(UIWindow *window, UIPainter *painter)
 {
-    HDC              dc   = GetDC(window->hwnd);
+    HDC              dc   = GetDC(window->window.hwnd);
     BITMAPINFOHEADER info = {0};
     info.biSize           = sizeof(info);
     info.biWidth = window->width, info.biHeight = window->height;
@@ -294,31 +326,40 @@ void _UIWindowEndPaint(UIWindow *window, UIPainter *painter)
                   window->updateRegion.l, window->updateRegion.b + 1,
                   UI_RECT_WIDTH(window->updateRegion), -UI_RECT_HEIGHT(window->updateRegion),
                   window->bits, (BITMAPINFO *)&info, DIB_RGB_COLORS, SRCCOPY);
-    ReleaseDC(window->hwnd, dc);
+    ReleaseDC(window->window.hwnd, dc);
 }
 
-void _UIWindowSetCursor(UIWindow *window, int cursor) { SetCursor(ui.cursors[cursor]); }
 
-void _UIWindowGetScreenPosition(UIWindow *window, int *_x, int *_y)
+void _UIWindowSetCursor(UIWindow *window, int cursor)
+{
+    SetCursor(ui.platform->cursors[cursor]);
+    return;
+}
+
+
+void UI_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
 {
     POINT p;
     p.x = 0;
     p.y = 0;
-    ClientToScreen(window->hwnd, &p);
+    ClientToScreen(window->window.hwnd, &p);
     *_x = p.x;
     *_y = p.y;
+    return;
 }
+
 
 void UIWindowPostMessage(UIWindow *window, UIMessage message, void *_dp)
 {
-    PostMessage(window->hwnd, WM_APP + 1, (WPARAM)message, (LPARAM)_dp);
+    PostMessage(window->window.hwnd, WM_APP + 1, (WPARAM)message, (LPARAM)_dp);
 }
+
 
 void *_UIHeapReAlloc(void *pointer, size_t size)
 {
     if (pointer) {
         if (size) {
-            return HeapReAlloc(ui.heap, 0, pointer, size);
+            return HeapReAlloc(win_heap, 0, pointer, size);
         } else {
             UI_FREE(pointer);
             return NULL;
@@ -332,9 +373,10 @@ void *_UIHeapReAlloc(void *pointer, size_t size)
     }
 }
 
+
 void _UIClipboardWriteText(UIWindow *window, char *text)
 {
-    if (OpenClipboard(window->hwnd)) {
+    if (OpenClipboard(window->window.hwnd)) {
         EmptyClipboard();
         HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, _UIStringLength(text) + 1);
         char   *copy   = (char *)GlobalLock(memory);
@@ -348,7 +390,7 @@ void _UIClipboardWriteText(UIWindow *window, char *text)
 
 char *_UIClipboardReadTextStart(UIWindow *window, size_t *bytes)
 {
-    if (!OpenClipboard(window->hwnd)) {
+    if (!OpenClipboard(window->window.hwnd)) {
         return NULL;
     }
 
@@ -387,7 +429,13 @@ char *_UIClipboardReadTextStart(UIWindow *window, size_t *bytes)
     return copy;
 }
 
-void _UIClipboardReadTextEnd(UIWindow *window, char *text) { UI_FREE(text); }
+
+void _UIClipboardReadTextEnd(UIWindow *window, char *text)
+{
+    // c
+    UI_FREE(text);
+}
+
 
 void *_UIMemmove(void *dest, const void *src, size_t n)
 {
@@ -407,4 +455,3 @@ void *_UIMemmove(void *dest, const void *src, size_t n)
         return dest;
     }
 }
-#endif // UI_WINDOWS

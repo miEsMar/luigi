@@ -264,8 +264,8 @@ void UIDrawGlyph(UIPainter *painter, int x0, int y0, int c, uint32_t color)
     if (c < 0 || c > 127)
         c = '?';
 
-    UIRectangle rectangle =
-        UIRectangleIntersection(painter->clip, UI_RECT_4(x0, x0 + 8, y0, y0 + 16));
+    const UIRectangle r   = UI_RECT_4(x0, x0 + 8, y0, y0 + 16);
+    UIRectangle rectangle = UIRectangleIntersection(painter->clip, r);
 
     const uint8_t *data = (const uint8_t *)__default_font + c * 16;
 

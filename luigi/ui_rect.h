@@ -22,9 +22,9 @@ typedef struct UIRectangle {
 #define UI_RECT_4(x, y, z, w)                                                                      \
     (UIRectangle) { (x), (y), (z), (w) }
 #define UI_RECT_1(x)             UI_RECT_4(x, x, x, x)
-#define UI_RECT_1I(x)            UI_RECT_4(x, -x, x, -x)
+#define UI_RECT_1I(x)            UI_RECT_4(x, -(x), x, -(x))
 #define UI_RECT_2(x, y)          UI_RECT_4(x, x, y, y)
-#define UI_RECT_2I(x, y)         UI_RECT_4(x, -x, y, -y)
+#define UI_RECT_2I(x, y)         UI_RECT_4(x, -(x), y, -(y))
 #define UI_RECT_2S(x, y)         UI_RECT_4(0, x, 0, y)
 #define UI_RECT_4PD(x, y, w, h)  UI_RECT_4(x, x + w, y, y + h)
 #define UI_RECT_WIDTH(_r)        ((_r).r - (_r).l)

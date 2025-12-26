@@ -32,6 +32,28 @@ extern "C" {
      } while (0)
 #endif
 
+#ifdef UI_WINDOWS
+# undef _UNICODE
+# undef UNICODE
+# include <windows.h>
+
+extern HANDLE win_heap;
+
+# define UI_ASSERT(x)                                                                              \
+     do {                                                                                          \
+         if (!(x)) {                                                                               \
+             ui.platform->assertionFailure = true;                                                 \
+             MessageBox(0, "Assertion failure on line " _UI_TO_STRING_2(__LINE__), 0, 0);          \
+             ExitProcess(1);                                                                       \
+         }                                                                                         \
+     } while (0)
+# define UI_CALLOC(x) HeapAlloc(win_heap, HEAP_ZERO_MEMORY, (x))
+# define UI_FREE(x)   HeapFree(win_heap, 0, (x))
+# define UI_MALLOC(x) HeapAlloc(win_heap, 0, (x))
+# define UI_REALLOC   _UIHeapReAlloc
+# define UI_MEMMOVE   _UIMemmove
+#endif
+
 #if defined(UI_ESSENCE)
 # include <essence.h>
 
@@ -304,12 +326,14 @@ float _UIFloorFloat(float x)
     return convert.f;
 }
 
+
 float _UILinearMap(float value, float inFrom, float inTo, float outFrom, float outTo)
 {
     float inRange = inTo - inFrom, outRange = outTo - outFrom;
     float normalisedValue = (value - inFrom) / inRange;
     return normalisedValue * outRange + outFrom;
 }
+
 
 bool UIColorToHSV(uint32_t rgb, float *hue, float *saturation, float *value)
 {
@@ -373,6 +397,7 @@ void UIColorToRGB(float h, float s, float v, uint32_t *rgb)
 
     *rgb = UI_COLOR_FROM_FLOAT(r, g, b);
 }
+
 
 char *UIStringCopy(const char *in, ptrdiff_t inBytes)
 {

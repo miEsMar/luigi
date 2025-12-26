@@ -19,6 +19,11 @@ extern "C" {
 # import <Cocoa/Cocoa.h>
 # import <Foundation/Foundation.h>
 #endif
+#ifdef UI_WINDOWS
+# undef _UNICODE
+# undef UNICODE
+# include <windows.h>
+#endif
 
 
 #include "ui_cursor.h"
@@ -42,7 +47,6 @@ typedef struct UI_Platform {
 
 #ifdef UI_WINDOWS
     HCURSOR cursors[UI_CURSOR_COUNT];
-    HANDLE  heap;
     bool    assertionFailure;
 #endif
 
@@ -108,7 +112,13 @@ void UIMenuShow(UIMenu *menu);
 //
 
 
+#ifdef UI_LINUX
 UIWindow *_UIFindWindow(Window window);
+#endif
+#ifdef UI_WINDOWS
+void *_UIHeapReAlloc(void *pointer, size_t size);
+void *_UIMemmove(void *dest, const void *src, size_t n);
+#endif
 
 
 #ifdef __cplusplus

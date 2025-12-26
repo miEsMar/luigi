@@ -13,7 +13,6 @@ extern "C" {
 
 
 #include "luigi/automation_tests.h"
-#include "luigi/core.h"
 #include "luigi/font.h"
 #include "luigi/inspector.h"
 #include "luigi/timing.h"

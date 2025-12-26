@@ -22,6 +22,8 @@ static inline UI_CLOCK_T _UIClock(void)
 }
 #endif
 #ifdef UI_WINDOWS
+# include <windows.h>
+
 # define UI_CLOCK             GetTickCount
 # define UI_CLOCKS_PER_SECOND (1000)
 # define UI_CLOCK_T           DWORD
