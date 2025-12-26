@@ -28,8 +28,7 @@ extern struct Luigi ui;
 
 
 struct Luigi {
-    UI_Platform       *platform;
-    UI_PlatformWindow *window;
+    UI_Platform *platform;
 
     UIWindow *windows;
     UITheme   theme;
