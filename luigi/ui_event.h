@@ -72,9 +72,6 @@ typedef enum UIMessage {
 } UIMessage;
 
 
-bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp);
-
-
 #ifdef __cplusplus
 }
 #endif

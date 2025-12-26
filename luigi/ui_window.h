@@ -91,6 +91,9 @@ UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, in
 //
 
 
+bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp);
+
+
 void _UIWindowAdd(UIWindow *window);
 
 

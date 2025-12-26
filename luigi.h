@@ -64,7 +64,6 @@ extern "C" {
 # include "luigi/ui_dialog.c"
 # include "luigi/ui_draw.c"
 # include "luigi/ui_element.c"
-# include "luigi/ui_event.c"
 # include "luigi/ui_gauge.c"
 # include "luigi/ui_image.c"
 # include "luigi/ui_label.c"
