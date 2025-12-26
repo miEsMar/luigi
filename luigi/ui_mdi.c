@@ -1,4 +1,4 @@
-#include "mdi.h"
+#include "ui_mdi.h"
 #include "ui.h"
 #include "ui_button.h"
 #include "ui_draw.h"
