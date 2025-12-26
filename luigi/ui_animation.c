@@ -1,4 +1,3 @@
-#define UI_INTERNALS
 #include "ui_animation.h"
 #include "ui.h"
 #include "ui_event.h"
