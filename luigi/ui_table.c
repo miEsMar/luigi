@@ -1,140 +1,17 @@
 #include "ui_table.h"
+#include "ui.h"
 #include "ui_draw.h"
 #include "ui_element.h"
+#include "ui_event.h"
+#include "ui_key.h"
 #include "ui_window.h"
 #include "utils.h"
 
 
-/////////////////////////////////////////
-// Tables.
-/////////////////////////////////////////
-
-int UITableHitTest(UITable *table, int x, int y)
-{
-    x -= table->e.bounds.l;
-
-    if (x < 0 || x >= table->vScroll->e.bounds.l) {
-        return -1;
-    }
-
-    y -= (table->e.bounds.t + UI_SIZE_TABLE_HEADER * table->e.window->scale) -
-         table->vScroll->position;
-
-    int rowHeight = UI_SIZE_TABLE_ROW * table->e.window->scale;
-
-    if (y < 0 || y >= rowHeight * table->itemCount) {
-        return -1;
-    }
-
-    return y / rowHeight;
-}
+//
 
 
-int UITableHeaderHitTest(UITable *table, int x, int y)
-{
-    if (!table->columnCount)
-        return -1;
-    UIRectangle header = table->e.bounds;
-    header.b           = header.t + UI_SIZE_TABLE_HEADER * table->e.window->scale;
-    header.l += UI_SIZE_TABLE_COLUMN_GAP * table->e.window->scale;
-    int position = 0, index = 0;
-
-    while (true) {
-        int end = position;
-        for (; table->columns[end] != '\t' && table->columns[end]; end++)
-            ;
-        header.r = header.l + table->columnWidths[index];
-        if (UIRectangleContains(header, x, y))
-            return index;
-        header.l += table->columnWidths[index] + UI_SIZE_TABLE_COLUMN_GAP * table->e.window->scale;
-        if (table->columns[end] != '\t')
-            break;
-        position = end + 1, index++;
-    }
-
-    return -1;
-}
-
-
-bool UITableEnsureVisible(UITable *table, int index)
-{
-    int rowHeight = UI_SIZE_TABLE_ROW * table->e.window->scale;
-    int y         = index * rowHeight;
-    y -= table->vScroll->position;
-    int height =
-        UI_RECT_HEIGHT(table->e.bounds) - UI_SIZE_TABLE_HEADER * table->e.window->scale - rowHeight;
-
-    if (y < 0) {
-        table->vScroll->position += y;
-        UIElementRefresh(&table->e);
-        return true;
-    } else if (y > height) {
-        table->vScroll->position -= height - y;
-        UIElementRefresh(&table->e);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-
-void UITableResizeColumns(UITable *table)
-{
-    int position = 0;
-    int count    = 0;
-
-    while (true) {
-        int end = position;
-        for (; table->columns[end] != '\t' && table->columns[end]; end++)
-            ;
-        count++;
-        if (table->columns[end] == '\t')
-            position = end + 1;
-        else
-            break;
-    }
-
-    UI_FREE(table->columnWidths);
-    table->columnWidths = (int *)UI_MALLOC(count * sizeof(int));
-    table->columnCount  = count;
-
-    position = 0;
-
-    char           buffer[256];
-    UITableGetItem m = {0};
-    m.buffer         = buffer;
-    m.bufferBytes    = sizeof(buffer);
-
-    while (true) {
-        int end = position;
-        for (; table->columns[end] != '\t' && table->columns[end]; end++)
-            ;
-
-        int longest = UIMeasureStringWidth(table->columns + position, end - position);
-
-        for (int i = 0; i < table->itemCount; i++) {
-            m.index   = i;
-            int bytes = UIElementMessage(&table->e, UI_MSG_TABLE_GET_ITEM, 0, &m);
-            int width = UIMeasureStringWidth(buffer, bytes);
-
-            if (width > longest) {
-                longest = width;
-            }
-        }
-
-        table->columnWidths[m.column] = longest;
-        m.column++;
-        if (table->columns[end] == '\t')
-            position = end + 1;
-        else
-            break;
-    }
-
-    UIElementRepaint(&table->e, NULL);
-}
-
-
-int _UITableMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UITableMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UITable *table = (UITable *)element;
 
@@ -265,7 +142,8 @@ int _UITableMessage(UIElement *element, UIMessage message, int di, void *dp)
             !element->window->ctrl && !element->window->alt && !element->window->shift) {
             _UI_KEY_INPUT_VSCROLL(
                 table, UI_SIZE_TABLE_ROW * element->window->scale,
-                (element->bounds.t - table->hScroll->e.bounds.t + UI_SIZE_TABLE_HEADER) * 4 / 5);
+                (float)(element->bounds.t - table->hScroll->e.bounds.t + UI_SIZE_TABLE_HEADER) * 4 /
+                    5);
             return 1;
         } else if ((m->code == UI_KEYCODE_LEFT || m->code == UI_KEYCODE_RIGHT) &&
                    !element->window->ctrl && !element->window->alt && !element->window->shift) {
@@ -280,6 +158,134 @@ int _UITableMessage(UIElement *element, UIMessage message, int di, void *dp)
     }
 
     return 0;
+}
+
+
+//
+
+
+int UITableHitTest(UITable *table, int x, int y)
+{
+    x -= table->e.bounds.l;
+
+    if (x < 0 || x >= table->vScroll->e.bounds.l) {
+        return -1;
+    }
+
+    y -= (table->e.bounds.t + UI_SIZE_TABLE_HEADER * table->e.window->scale) -
+         table->vScroll->position;
+
+    int rowHeight = UI_SIZE_TABLE_ROW * table->e.window->scale;
+
+    if (y < 0 || y >= rowHeight * table->itemCount) {
+        return -1;
+    }
+
+    return y / rowHeight;
+}
+
+
+int UITableHeaderHitTest(UITable *table, int x, int y)
+{
+    if (!table->columnCount)
+        return -1;
+    UIRectangle header = table->e.bounds;
+    header.b           = header.t + UI_SIZE_TABLE_HEADER * table->e.window->scale;
+    header.l += UI_SIZE_TABLE_COLUMN_GAP * table->e.window->scale;
+    int position = 0, index = 0;
+
+    while (true) {
+        int end = position;
+        for (; table->columns[end] != '\t' && table->columns[end]; end++)
+            ;
+        header.r = header.l + table->columnWidths[index];
+        if (UIRectangleContains(header, x, y))
+            return index;
+        header.l += table->columnWidths[index] + UI_SIZE_TABLE_COLUMN_GAP * table->e.window->scale;
+        if (table->columns[end] != '\t')
+            break;
+        position = end + 1, index++;
+    }
+
+    return -1;
+}
+
+
+bool UITableEnsureVisible(UITable *table, int index)
+{
+    int rowHeight = UI_SIZE_TABLE_ROW * table->e.window->scale;
+    int y         = index * rowHeight;
+    y -= table->vScroll->position;
+    int height =
+        UI_RECT_HEIGHT(table->e.bounds) - UI_SIZE_TABLE_HEADER * table->e.window->scale - rowHeight;
+
+    if (y < 0) {
+        table->vScroll->position += y;
+        UIElementRefresh(&table->e);
+        return true;
+    } else if (y > height) {
+        table->vScroll->position -= height - y;
+        UIElementRefresh(&table->e);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
+void UITableResizeColumns(UITable *table)
+{
+    int position = 0;
+    int count    = 0;
+
+    while (true) {
+        int end = position;
+        for (; table->columns[end] != '\t' && table->columns[end]; end++)
+            ;
+        count++;
+        if (table->columns[end] == '\t')
+            position = end + 1;
+        else
+            break;
+    }
+
+    UI_FREE(table->columnWidths);
+    table->columnWidths = (int *)UI_MALLOC(count * sizeof(int));
+    table->columnCount  = count;
+
+    position = 0;
+
+    char           buffer[256];
+    UITableGetItem m = {0};
+    m.buffer         = buffer;
+    m.bufferBytes    = sizeof(buffer);
+
+    while (true) {
+        int end = position;
+        for (; table->columns[end] != '\t' && table->columns[end]; end++)
+            ;
+
+        int longest = UIMeasureStringWidth(table->columns + position, end - position);
+
+        for (int i = 0; i < table->itemCount; i++) {
+            m.index   = i;
+            int bytes = UIElementMessage(&table->e, UI_MSG_TABLE_GET_ITEM, 0, &m);
+            int width = UIMeasureStringWidth(buffer, bytes);
+
+            if (width > longest) {
+                longest = width;
+            }
+        }
+
+        table->columnWidths[m.column] = longest;
+        m.column++;
+        if (table->columns[end] == '\t')
+            position = end + 1;
+        else
+            break;
+    }
+
+    UIElementRepaint(&table->e, NULL);
 }
 
 

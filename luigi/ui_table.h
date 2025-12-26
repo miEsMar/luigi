@@ -46,10 +46,9 @@ int  UITableHitTest(UITable *table, int x, int y);
 void UITableResizeColumns(UITable *table);
 
 
-int _UITableMessage(UIElement *element, UIMessage message, int di, void *dp);
-
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif // LUIGI_TABLE_H_
