@@ -8,7 +8,7 @@
 #include "utils.h"
 
 
-int _UICheckboxMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UICheckboxMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UICheckbox *box = (UICheckbox *)element;
 

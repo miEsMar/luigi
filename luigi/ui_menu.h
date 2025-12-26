@@ -46,7 +46,6 @@ void    UIMenuAddItem(UIMenu *menu, uint32_t flags, const char *label, ptrdiff_t
 
 void _UIMenuPrepare(UIMenu *menu, int *width, int *height);
 int  _UIMenuItemMessage(UIElement *element, UIMessage message, int di, void *dp);
-int  _UIMenuMessage(UIElement *element, UIMessage message, int di, void *dp);
 bool _UIMenusClose(void);
 #endif
 

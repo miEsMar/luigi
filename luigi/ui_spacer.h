@@ -19,8 +19,6 @@ typedef struct UISpacer {
 UISpacer *UISpacerCreate(UIElement *parent, uint32_t flags, int width, int height);
 
 
-int _UISpacerMessage(UIElement *element, UIMessage message, int di, void *dp);
-
 #ifdef __cplusplus
 }
 #endif

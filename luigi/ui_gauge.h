@@ -30,9 +30,6 @@ UIGauge *UIGaugeCreate(UIElement *parent, uint32_t flags);
 void     UIGaugeSetPosition(UIGauge *gauge, float position);
 
 
-int _UIGaugeMessage(UIElement *element, UIMessage message, int di, void *dp);
-
-
 #ifdef __cplusplus
 }
 #endif

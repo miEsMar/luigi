@@ -1,29 +1,10 @@
 #include "ui_gauge.h"
 #include "ui_draw.h"
+#include "ui_event.h"
 #include "ui_painter.h"
 
-/////////////////////////////////////////
-// Gauges.
-/////////////////////////////////////////
 
-
-UIGauge *UIGaugeCreate(UIElement *parent, uint32_t flags)
-{
-    return (UIGauge *)UIElementCreate(sizeof(UIGauge), parent, flags, _UIGaugeMessage, "Gauge");
-}
-
-
-void UIGaugeSetPosition(UIGauge *gauge, float position)
-{
-    if (position == gauge->position)
-        return;
-    if (position < 0)
-        position = 0;
-    if (position > 1)
-        position = 1;
-    gauge->position = position;
-    UIElementRepaint(&gauge->e, NULL);
-}
+//
 
 
 int _UIGaugeMessage(UIElement *element, UIMessage message, int di, void *dp)
@@ -45,4 +26,26 @@ int _UIGaugeMessage(UIElement *element, UIMessage message, int di, void *dp)
     }
 
     return 0;
+}
+
+
+//
+
+
+UIGauge *UIGaugeCreate(UIElement *parent, uint32_t flags)
+{
+    return (UIGauge *)UIElementCreate(sizeof(UIGauge), parent, flags, _UIGaugeMessage, "Gauge");
+}
+
+
+void UIGaugeSetPosition(UIGauge *gauge, float position)
+{
+    if (position == gauge->position)
+        return;
+    if (position < 0)
+        position = 0;
+    if (position > 1)
+        position = 1;
+    gauge->position = position;
+    UIElementRepaint(&gauge->e, NULL);
 }

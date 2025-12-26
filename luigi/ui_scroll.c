@@ -6,7 +6,7 @@
 #include "ui_window.h"
 
 
-int _UIScrollBarMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIScrollBarMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIScrollBar *scrollBar = (UIScrollBar *)element;
 
@@ -87,7 +87,7 @@ int _UIScrollBarMessage(UIElement *element, UIMessage message, int di, void *dp)
 }
 
 
-int _UIScrollUpDownMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIScrollUpDownMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIScrollBar *scrollBar = (UIScrollBar *)element->parent;
     bool         isDown    = element->cp;
@@ -126,7 +126,7 @@ int _UIScrollUpDownMessage(UIElement *element, UIMessage message, int di, void *
 }
 
 
-int _UIScrollThumbMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIScrollThumbMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIScrollBar *scrollBar = (UIScrollBar *)element->parent;
 
@@ -166,6 +166,9 @@ int _UIScrollThumbMessage(UIElement *element, UIMessage message, int di, void *d
 
     return 0;
 }
+
+
+//
 
 
 UIScrollBar *UIScrollBarCreate(UIElement *parent, uint32_t flags)

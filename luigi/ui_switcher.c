@@ -4,7 +4,7 @@
 #include "utils.h"
 
 
-int _UISwitcherMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UISwitcherMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UISwitcher *switcher = (UISwitcher *)element;
 

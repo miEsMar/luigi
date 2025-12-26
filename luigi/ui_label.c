@@ -6,7 +6,7 @@
 #include "utils.h"
 
 
-int _UILabelMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UILabelMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UILabel *label = (UILabel *)element;
 

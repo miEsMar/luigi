@@ -39,11 +39,9 @@ UIWrapPanel *UIWrapPanelCreate(UIElement *parent, uint32_t flags);
 
 
 int _UIPanelLayout(UIPanel *panel, UIRectangle bounds, bool measure);
-int _UIPanelMessage(UIElement *element, UIMessage message, int di, void *dp);
 int _UIPanelCalculatePerFill(UIPanel *panel, int *_count, int hSpace, int vSpace, float scale);
 int _UIPanelMeasure(UIPanel *panel, int di);
 
-int  _UIWrapPanelMessage(UIElement *element, UIMessage message, int di, void *dp);
 void _UIWrapPanelLayoutRow(UIWrapPanel *panel, uint32_t rowStart, uint32_t rowEnd, int rowY,
                            int rowHeight);
 

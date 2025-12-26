@@ -38,7 +38,6 @@ void UIImageDisplaySetContent(UIImageDisplay *display, uint32_t *bits, size_t wi
 
 
 void _UIImageDisplayUpdateViewport(UIImageDisplay *display);
-int  _UIImageDisplayMessage(UIElement *element, UIMessage message, int di, void *dp);
 
 
 #ifdef __cplusplus

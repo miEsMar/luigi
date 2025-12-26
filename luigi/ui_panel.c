@@ -1,10 +1,115 @@
 #include "ui_panel.h"
+#include "ui.h"
+#include "ui_draw.h"
+#include "ui_event.h"
 #include "ui_pane.h"
+#include "ui_scroll.h"
 
 
-/////////////////////////////////////////
-// Panels.
-/////////////////////////////////////////
+//
+
+
+static int _UIPanelMessage(UIElement *element, UIMessage message, int di, void *dp)
+{
+    UIPanel *panel      = (UIPanel *)element;
+    bool     horizontal = element->flags & UI_PANEL_HORIZONTAL;
+
+    if (message == UI_MSG_LAYOUT) {
+        int scrollBarWidth = panel->scrollBar ? (UI_SIZE_SCROLL_BAR * element->window->scale) : 0;
+        UIRectangle bounds = element->bounds;
+        bounds.r -= scrollBarWidth;
+
+        if (panel->scrollBar) {
+            UIRectangle scrollBarBounds = element->bounds;
+            scrollBarBounds.l           = scrollBarBounds.r - scrollBarWidth;
+            panel->scrollBar->maximum   = _UIPanelLayout(panel, bounds, true);
+            panel->scrollBar->page      = UI_RECT_HEIGHT(element->bounds);
+            UIElementMove(&panel->scrollBar->e, scrollBarBounds, true);
+        }
+
+        _UIPanelLayout(panel, bounds, false);
+    } else if (message == UI_MSG_GET_WIDTH) {
+        if (horizontal) {
+            return _UIPanelLayout(panel, UI_RECT_4(0, 0, 0, di), true);
+        } else {
+            return _UIPanelMeasure(panel, di);
+        }
+    } else if (message == UI_MSG_GET_HEIGHT) {
+        if (horizontal) {
+            return _UIPanelMeasure(panel, di);
+        } else {
+            int width =
+                di && panel->scrollBar ? (di - UI_SIZE_SCROLL_BAR * element->window->scale) : di;
+            return _UIPanelLayout(panel, UI_RECT_4(0, width, 0, 0), true);
+        }
+    } else if (message == UI_MSG_PAINT) {
+        if (element->flags & UI_PANEL_COLOR_1) {
+            UIDrawBlock((UIPainter *)dp, element->bounds, ui.theme.panel1);
+        } else if (element->flags & UI_PANEL_COLOR_2) {
+            UIDrawBlock((UIPainter *)dp, element->bounds, ui.theme.panel2);
+        }
+    } else if (message == UI_MSG_MOUSE_WHEEL && panel->scrollBar) {
+        return UIElementMessage(&panel->scrollBar->e, message, di, dp);
+    } else if (message == UI_MSG_SCROLLED) {
+        UIElementRefresh(element);
+    } else if (message == UI_MSG_GET_CHILD_STABILITY) {
+        UIElement *child = (UIElement *)dp;
+        return ((element->flags & UI_PANEL_EXPAND) ? (horizontal ? 2 : 1) : 0) |
+               ((child->flags & UI_ELEMENT_H_FILL) ? 1 : 0) |
+               ((child->flags & UI_ELEMENT_V_FILL) ? 2 : 0);
+    }
+
+    return 0;
+}
+
+
+static int _UIWrapPanelMessage(UIElement *element, UIMessage message, int di, void *dp)
+{
+    UIWrapPanel *panel = (UIWrapPanel *)element;
+
+    if (message == UI_MSG_LAYOUT || message == UI_MSG_GET_HEIGHT) {
+        int totalHeight = 0;
+        int rowPosition = 0;
+        int rowHeight   = 0;
+        int rowLimit    = message == UI_MSG_LAYOUT ? UI_RECT_WIDTH(element->bounds) : di;
+
+        uint32_t rowStart = 0;
+
+        for (uint32_t i = 0; i < panel->e.childCount; i++) {
+            UIElement *child = panel->e.children[i];
+            if (child->flags & UI_ELEMENT_HIDE)
+                continue;
+
+            int height = UIElementMessage(child, UI_MSG_GET_HEIGHT, 0, 0);
+            int width  = UIElementMessage(child, UI_MSG_GET_WIDTH, 0, 0);
+
+            if (rowLimit && rowPosition + width > rowLimit) {
+                _UIWrapPanelLayoutRow(panel, rowStart, i, totalHeight, rowHeight);
+                totalHeight += rowHeight;
+                rowPosition = rowHeight = 0;
+                rowStart                = i;
+            }
+
+            if (height > rowHeight) {
+                rowHeight = height;
+            }
+
+            rowPosition += width;
+        }
+
+        if (message == UI_MSG_GET_HEIGHT) {
+            return totalHeight + rowHeight;
+        } else {
+            _UIWrapPanelLayoutRow(panel, rowStart, panel->e.childCount, totalHeight, rowHeight);
+        }
+    }
+
+    return 0;
+}
+
+
+//
+
 
 int _UIPanelCalculatePerFill(UIPanel *panel, int *_count, int hSpace, int vSpace, float scale)
 {
@@ -134,60 +239,6 @@ int _UIPanelLayout(UIPanel *panel, UIRectangle bounds, bool measure)
 }
 
 
-int _UIPanelMessage(UIElement *element, UIMessage message, int di, void *dp)
-{
-    UIPanel *panel      = (UIPanel *)element;
-    bool     horizontal = element->flags & UI_PANEL_HORIZONTAL;
-
-    if (message == UI_MSG_LAYOUT) {
-        int scrollBarWidth = panel->scrollBar ? (UI_SIZE_SCROLL_BAR * element->window->scale) : 0;
-        UIRectangle bounds = element->bounds;
-        bounds.r -= scrollBarWidth;
-
-        if (panel->scrollBar) {
-            UIRectangle scrollBarBounds = element->bounds;
-            scrollBarBounds.l           = scrollBarBounds.r - scrollBarWidth;
-            panel->scrollBar->maximum   = _UIPanelLayout(panel, bounds, true);
-            panel->scrollBar->page      = UI_RECT_HEIGHT(element->bounds);
-            UIElementMove(&panel->scrollBar->e, scrollBarBounds, true);
-        }
-
-        _UIPanelLayout(panel, bounds, false);
-    } else if (message == UI_MSG_GET_WIDTH) {
-        if (horizontal) {
-            return _UIPanelLayout(panel, UI_RECT_4(0, 0, 0, di), true);
-        } else {
-            return _UIPanelMeasure(panel, di);
-        }
-    } else if (message == UI_MSG_GET_HEIGHT) {
-        if (horizontal) {
-            return _UIPanelMeasure(panel, di);
-        } else {
-            int width =
-                di && panel->scrollBar ? (di - UI_SIZE_SCROLL_BAR * element->window->scale) : di;
-            return _UIPanelLayout(panel, UI_RECT_4(0, width, 0, 0), true);
-        }
-    } else if (message == UI_MSG_PAINT) {
-        if (element->flags & UI_PANEL_COLOR_1) {
-            UIDrawBlock((UIPainter *)dp, element->bounds, ui.theme.panel1);
-        } else if (element->flags & UI_PANEL_COLOR_2) {
-            UIDrawBlock((UIPainter *)dp, element->bounds, ui.theme.panel2);
-        }
-    } else if (message == UI_MSG_MOUSE_WHEEL && panel->scrollBar) {
-        return UIElementMessage(&panel->scrollBar->e, message, di, dp);
-    } else if (message == UI_MSG_SCROLLED) {
-        UIElementRefresh(element);
-    } else if (message == UI_MSG_GET_CHILD_STABILITY) {
-        UIElement *child = (UIElement *)dp;
-        return ((element->flags & UI_PANEL_EXPAND) ? (horizontal ? 2 : 1) : 0) |
-               ((child->flags & UI_ELEMENT_H_FILL) ? 1 : 0) |
-               ((child->flags & UI_ELEMENT_V_FILL) ? 2 : 0);
-    }
-
-    return 0;
-}
-
-
 UIPanel *UIPanelCreate(UIElement *parent, uint32_t flags)
 {
     UIPanel *panel =
@@ -228,51 +279,6 @@ void _UIWrapPanelLayoutRow(UIWrapPanel *panel, uint32_t rowStart, uint32_t rowEn
         UIElementMove(child, UIRectangleTranslate(relative, panel->e.bounds), false);
         rowPosition += width;
     }
-}
-
-
-int _UIWrapPanelMessage(UIElement *element, UIMessage message, int di, void *dp)
-{
-    UIWrapPanel *panel = (UIWrapPanel *)element;
-
-    if (message == UI_MSG_LAYOUT || message == UI_MSG_GET_HEIGHT) {
-        int totalHeight = 0;
-        int rowPosition = 0;
-        int rowHeight   = 0;
-        int rowLimit    = message == UI_MSG_LAYOUT ? UI_RECT_WIDTH(element->bounds) : di;
-
-        uint32_t rowStart = 0;
-
-        for (uint32_t i = 0; i < panel->e.childCount; i++) {
-            UIElement *child = panel->e.children[i];
-            if (child->flags & UI_ELEMENT_HIDE)
-                continue;
-
-            int height = UIElementMessage(child, UI_MSG_GET_HEIGHT, 0, 0);
-            int width  = UIElementMessage(child, UI_MSG_GET_WIDTH, 0, 0);
-
-            if (rowLimit && rowPosition + width > rowLimit) {
-                _UIWrapPanelLayoutRow(panel, rowStart, i, totalHeight, rowHeight);
-                totalHeight += rowHeight;
-                rowPosition = rowHeight = 0;
-                rowStart                = i;
-            }
-
-            if (height > rowHeight) {
-                rowHeight = height;
-            }
-
-            rowPosition += width;
-        }
-
-        if (message == UI_MSG_GET_HEIGHT) {
-            return totalHeight + rowHeight;
-        } else {
-            _UIWrapPanelLayoutRow(panel, rowStart, panel->e.childCount, totalHeight, rowHeight);
-        }
-    }
-
-    return 0;
 }
 
 

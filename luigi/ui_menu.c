@@ -3,57 +3,17 @@
 #include "ui_button.h"
 #include "ui_draw.h"
 #include "ui_element.h"
+#include "ui_event.h"
+#include "ui_key.h"
+#include "ui_rect.h"
 #include "ui_scroll.h"
 #include "ui_window.h"
 
 
-bool UIMenusOpen(void)
-{
-    UIWindow *window = ui.windows;
-
-    while (window) {
-        if (window->e.flags & UI_WINDOW_MENU) {
-            return true;
-        }
-        window = window->next;
-    }
-    return false;
-}
+//
 
 
-/////////////////////////////////////////
-// Menus (common).
-/////////////////////////////////////////
-
-
-bool _UIMenusClose(void)
-{
-    UIWindow *window    = ui.windows;
-    bool      anyClosed = false;
-
-    while (window) {
-        if (window->e.flags & UI_WINDOW_MENU) {
-            UIElementDestroy(&window->e);
-            anyClosed = true;
-        }
-
-        window = window->next;
-    }
-
-    return anyClosed;
-}
-
-#if !defined(UI_ESSENCE) && !defined(UI_COCOA)
-int _UIMenuItemMessage(UIElement *element, UIMessage message, int di, void *dp)
-{
-    if (message == UI_MSG_CLICKED) {
-        _UIMenusClose();
-    }
-
-    return 0;
-}
-
-int _UIMenuMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIMenuMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIMenu *menu = (UIMenu *)element;
 
@@ -122,6 +82,56 @@ int _UIMenuMessage(UIElement *element, UIMessage message, int di, void *dp)
         return UIElementMessage(&menu->vScroll->e, message, di, dp);
     } else if (message == UI_MSG_SCROLLED) {
         UIElementRefresh(element);
+    }
+
+    return 0;
+}
+
+
+//
+
+
+bool UIMenusOpen(void)
+{
+    UIWindow *window = ui.windows;
+
+    while (window) {
+        if (window->e.flags & UI_WINDOW_MENU) {
+            return true;
+        }
+        window = window->next;
+    }
+    return false;
+}
+
+
+/////////////////////////////////////////
+// Menus (common).
+/////////////////////////////////////////
+
+
+bool _UIMenusClose(void)
+{
+    UIWindow *window    = ui.windows;
+    bool      anyClosed = false;
+
+    while (window) {
+        if (window->e.flags & UI_WINDOW_MENU) {
+            UIElementDestroy(&window->e);
+            anyClosed = true;
+        }
+
+        window = window->next;
+    }
+
+    return anyClosed;
+}
+
+#if !defined(UI_ESSENCE) && !defined(UI_COCOA)
+int _UIMenuItemMessage(UIElement *element, UIMessage message, int di, void *dp)
+{
+    if (message == UI_MSG_CLICKED) {
+        _UIMenusClose();
     }
 
     return 0;

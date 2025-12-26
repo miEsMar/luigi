@@ -33,8 +33,6 @@ typedef struct UICheckbox {
 UICheckbox *UICheckboxCreate(UIElement *parent, uint32_t flags, const char *label,
                              ptrdiff_t labelBytes);
 
-int _UICheckboxMessage(UIElement *element, UIMessage message, int di, void *dp);
-
 
 #ifdef __cplusplus
 }

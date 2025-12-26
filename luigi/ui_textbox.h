@@ -42,8 +42,6 @@ void _UITextboxPasteText(void *cp);
 int  _UITextboxByteToColumn(const char *string, int byte, ptrdiff_t bytes);
 int  _UITextboxColumnToByte(const char *string, int column, ptrdiff_t bytes);
 
-int _UITextboxMessage(UIElement *element, UIMessage message, int di, void *dp);
-
 
 #ifdef __cplusplus
 }

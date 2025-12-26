@@ -39,9 +39,6 @@ UIButton *UIButtonCreate(UIElement *parent, uint32_t flags, const char *label,
 void      UIButtonSetLabel(UIButton *button, const char *string, ptrdiff_t stringBytes);
 
 
-int _UIButtonMessage(UIElement *element, UIMessage message, int di, void *dp);
-
-
 #ifdef __cplusplus
 }
 #endif

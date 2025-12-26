@@ -25,9 +25,6 @@ UILabel *UILabelCreate(UIElement *parent, uint32_t flags, const char *string,
 void     UILabelSetContent(UILabel *label, const char *string, ptrdiff_t stringBytes);
 
 
-int _UILabelMessage(UIElement *element, UIMessage message, int di, void *dp);
-
-
 #ifdef __cplusplus
 }
 #endif

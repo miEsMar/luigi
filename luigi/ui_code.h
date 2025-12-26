@@ -90,7 +90,6 @@ int  _UICodeColumnToByte(UICode *code, int line, int column);
 void _UICodeUpdateSelection(UICode *code);
 void _UICodeSetVerticalMotionColumn(UICode *code, bool restore);
 void _UICodeCopyText(void *cp);
-int  _UICodeMessage(UIElement *element, UIMessage message, int di, void *dp);
 
 
 #ifdef __cplusplus

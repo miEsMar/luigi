@@ -10,40 +10,7 @@
 #endif
 
 
-void _UIImageDisplayUpdateViewport(UIImageDisplay *display)
-{
-    UIRectangle bounds = display->e.bounds;
-    bounds.r -= bounds.l, bounds.b -= bounds.t;
-
-    float minimumZoomX = 1, minimumZoomY = 1;
-    if (display->width > bounds.r)
-        minimumZoomX = (float)bounds.r / display->width;
-    if (display->height > bounds.b)
-        minimumZoomY = (float)bounds.b / display->height;
-    float minimumZoom = minimumZoomX < minimumZoomY ? minimumZoomX : minimumZoomY;
-
-    if (display->zoom < minimumZoom || (display->e.flags & _UI_IMAGE_DISPLAY_ZOOM_FIT)) {
-        display->zoom = minimumZoom;
-        display->e.flags |= _UI_IMAGE_DISPLAY_ZOOM_FIT;
-    }
-
-    if (display->panX < 0)
-        display->panX = 0;
-    if (display->panY < 0)
-        display->panY = 0;
-    if (display->panX > display->width - bounds.r / display->zoom)
-        display->panX = display->width - bounds.r / display->zoom;
-    if (display->panY > display->height - bounds.b / display->zoom)
-        display->panY = display->height - bounds.b / display->zoom;
-
-    if (bounds.r && display->width * display->zoom <= bounds.r)
-        display->panX = ((float)display->width / 2) - bounds.r / display->zoom / 2;
-    if (bounds.b && display->height * display->zoom <= bounds.b)
-        display->panY = ((float)display->height / 2) - bounds.b / display->zoom / 2;
-}
-
-
-int _UIImageDisplayMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIImageDisplayMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIImageDisplay *display = (UIImageDisplay *)element;
 
@@ -323,6 +290,39 @@ int _UIImageDisplayMessage(UIElement *element, UIMessage message, int di, void *
     }
 
     return 0;
+}
+
+
+void _UIImageDisplayUpdateViewport(UIImageDisplay *display)
+{
+    UIRectangle bounds = display->e.bounds;
+    bounds.r -= bounds.l, bounds.b -= bounds.t;
+
+    float minimumZoomX = 1, minimumZoomY = 1;
+    if (display->width > bounds.r)
+        minimumZoomX = (float)bounds.r / display->width;
+    if (display->height > bounds.b)
+        minimumZoomY = (float)bounds.b / display->height;
+    float minimumZoom = minimumZoomX < minimumZoomY ? minimumZoomX : minimumZoomY;
+
+    if (display->zoom < minimumZoom || (display->e.flags & _UI_IMAGE_DISPLAY_ZOOM_FIT)) {
+        display->zoom = minimumZoom;
+        display->e.flags |= _UI_IMAGE_DISPLAY_ZOOM_FIT;
+    }
+
+    if (display->panX < 0)
+        display->panX = 0;
+    if (display->panY < 0)
+        display->panY = 0;
+    if (display->panX > display->width - bounds.r / display->zoom)
+        display->panX = display->width - bounds.r / display->zoom;
+    if (display->panY > display->height - bounds.b / display->zoom)
+        display->panY = display->height - bounds.b / display->zoom;
+
+    if (bounds.r && display->width * display->zoom <= bounds.r)
+        display->panX = ((float)display->width / 2) - bounds.r / display->zoom / 2;
+    if (bounds.b && display->height * display->zoom <= bounds.b)
+        display->panY = ((float)display->height / 2) - bounds.b / display->zoom / 2;
 }
 
 

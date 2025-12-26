@@ -20,9 +20,6 @@ UISwitcher *UISwitcherCreate(UIElement *parent, uint32_t flags);
 void        UISwitcherSwitchTo(UISwitcher *switcher, UIElement *child);
 
 
-int _UISwitcherMessage(UIElement *element, UIMessage message, int di, void *dp);
-
-
 #ifdef __cplusplus
 }
 #endif

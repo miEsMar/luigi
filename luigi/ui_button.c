@@ -9,7 +9,7 @@
 #include "utils.h"
 
 
-int _UIButtonMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIButtonMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UIButton *button     = (UIButton *)element;
     bool      isMenuItem = element->flags & UI_BUTTON_MENU_ITEM;

@@ -31,9 +31,6 @@ UISlider *UISliderCreate(UIElement *parent, uint32_t flags);
 void      UISliderSetPosition(UISlider *slider, double position, bool sendChangedMessage);
 
 
-int _UISliderMessage(UIElement *element, UIMessage message, int di, void *dp);
-
-
 #ifdef __cplusplus
 }
 #endif

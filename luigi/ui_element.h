@@ -75,6 +75,8 @@ void       UIElementMeasurementsChanged(UIElement *element, int which);
 UIElement *UIElementChangeParent(UIElement *element, UIElement *newParent, UIElement *insertBefore);
 int        UIElementMessage(UIElement *element, UIMessage message, int di, void *dp);
 
+UIRectangle UIElementScreenBounds(UIElement *element);
+
 void UIElementRefresh(UIElement *element);
 
 void UIElementFocus(UIElement *element);

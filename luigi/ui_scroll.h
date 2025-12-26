@@ -61,12 +61,8 @@ typedef struct UIScrollBar {
 
 //
 
+
 UIScrollBar *UIScrollBarCreate(UIElement *parent, uint32_t flags);
-
-
-int _UIScrollBarMessage(UIElement *element, UIMessage message, int di, void *dp);
-int _UIScrollUpDownMessage(UIElement *element, UIMessage message, int di, void *dp);
-int _UIScrollThumbMessage(UIElement *element, UIMessage message, int di, void *dp);
 
 
 #ifdef __cplusplus

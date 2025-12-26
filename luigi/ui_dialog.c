@@ -19,7 +19,8 @@
 // Modal dialogs.
 /////////////////////////////////////////
 
-int _UIDialogWrapperMessage(UIElement *element, UIMessage message, int di, void *dp)
+
+static int _UIDialogWrapperMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     if (message == UI_MSG_LAYOUT) {
         int         width  = UIElementMessage(element->children[0], UI_MSG_GET_WIDTH, 0, 0);
@@ -95,14 +96,8 @@ int _UIDialogWrapperMessage(UIElement *element, UIMessage message, int di, void 
     return 0;
 }
 
-void _UIDialogButtonInvoke(void *cp)
-{
-    // c
-    ui.dialogResult = (const char *)cp;
-}
 
-
-int _UIDialogDefaultButtonMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIDialogDefaultButtonMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     if (message == UI_MSG_PAINT && element->window->focused->messageClass != _UIButtonMessage) {
         element->flags |= UI_BUTTON_CHECKED;
@@ -115,7 +110,7 @@ int _UIDialogDefaultButtonMessage(UIElement *element, UIMessage message, int di,
 }
 
 
-int _UIDialogTextboxMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIDialogTextboxMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UITextbox *textbox = (UITextbox *)element;
 
@@ -136,6 +131,16 @@ int _UIDialogTextboxMessage(UIElement *element, UIMessage message, int di, void 
 
     return 0;
 }
+
+
+void _UIDialogButtonInvoke(void *cp)
+{
+    // c
+    ui.dialogResult = (const char *)cp;
+}
+
+
+//
 
 
 const char *UIDialogShow(UIWindow *window, uint32_t flags, const char *format, ...)

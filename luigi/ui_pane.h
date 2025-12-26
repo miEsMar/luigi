@@ -54,11 +54,6 @@ UISplitPane *UISplitPaneCreate(UIElement *parent, uint32_t flags, float weight);
 UITabPane   *UITabPaneCreate(UIElement *parent, uint32_t flags, const char *tabs);
 
 
-int _UISplitterMessage(UIElement *element, UIMessage message, int di, void *dp);
-int _UISplitPaneMessage(UIElement *element, UIMessage message, int di, void *dp);
-int _UITabPaneMessage(UIElement *element, UIMessage message, int di, void *dp);
-
-
 #ifdef __cplusplus
 }
 #endif

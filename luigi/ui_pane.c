@@ -3,61 +3,13 @@
 #include "ui_event.h"
 #include "ui_rect.h"
 #include "ui_window.h"
+#include "utils.h"
 
 
-/////////////////////////////////////////
-// Split panes.
-/////////////////////////////////////////
+//
 
 
-int _UISplitterMessage(UIElement *element, UIMessage message, int di, void *dp)
-{
-    UISplitPane *splitPane = (UISplitPane *)element->parent;
-    bool         vertical  = splitPane->e.flags & UI_SPLIT_PANE_VERTICAL;
-
-    if (message == UI_MSG_PAINT) {
-        UIDrawControl((UIPainter *)dp, element->bounds,
-                      UI_DRAW_CONTROL_SPLITTER | (vertical ? UI_DRAW_CONTROL_STATE_VERTICAL : 0) |
-                          UI_DRAW_CONTROL_STATE_FROM_ELEMENT(element),
-                      NULL, 0, 0, element->window->scale);
-    } else if (message == UI_MSG_GET_CURSOR) {
-        return vertical ? UI_CURSOR_SPLIT_V : UI_CURSOR_SPLIT_H;
-    } else if (message == UI_MSG_MOUSE_DRAG) {
-        int cursor       = vertical ? element->window->cursorY : element->window->cursorX;
-        int splitterSize = UI_SIZE_SPLITTER * element->window->scale;
-        int space =
-            (vertical ? UI_RECT_HEIGHT(splitPane->e.bounds) : UI_RECT_WIDTH(splitPane->e.bounds)) -
-            splitterSize;
-        float oldWeight   = splitPane->weight;
-        splitPane->weight = (float)(cursor - ((float)splitterSize / 2) -
-                                    (vertical ? splitPane->e.bounds.t : splitPane->e.bounds.l)) /
-                            space;
-        if (splitPane->weight < 0.05f)
-            splitPane->weight = 0.05f;
-        if (splitPane->weight > 0.95f)
-            splitPane->weight = 0.95f;
-
-        if (splitPane->e.children[2]->messageClass == _UISplitPaneMessage &&
-            (splitPane->e.children[2]->flags & UI_SPLIT_PANE_VERTICAL) ==
-                (splitPane->e.flags & UI_SPLIT_PANE_VERTICAL)) {
-            UISplitPane *subSplitPane = (UISplitPane *)splitPane->e.children[2];
-            subSplitPane->weight      = (splitPane->weight - oldWeight - subSplitPane->weight +
-                                    oldWeight * subSplitPane->weight) /
-                                   (-1 + splitPane->weight);
-            if (subSplitPane->weight < 0.05f)
-                subSplitPane->weight = 0.05f;
-            if (subSplitPane->weight > 0.95f)
-                subSplitPane->weight = 0.95f;
-        }
-
-        UIElementRefresh(&splitPane->e);
-    }
-
-    return 0;
-}
-
-
-int _UISplitPaneMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UISplitPaneMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UISplitPane *splitPane = (UISplitPane *)element;
     bool         vertical  = splitPane->e.flags & UI_SPLIT_PANE_VERTICAL;
@@ -108,21 +60,54 @@ int _UISplitPaneMessage(UIElement *element, UIMessage message, int di, void *dp)
 }
 
 
-UISplitPane *UISplitPaneCreate(UIElement *parent, uint32_t flags, float weight)
+static int _UISplitterMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
-    UISplitPane *splitPane = (UISplitPane *)UIElementCreate(sizeof(UISplitPane), parent, flags,
-                                                            _UISplitPaneMessage, "Split Pane");
-    splitPane->weight      = weight;
-    UIElementCreate(sizeof(UIElement), &splitPane->e, 0, _UISplitterMessage, "Splitter");
-    return splitPane;
+    UISplitPane *splitPane = (UISplitPane *)element->parent;
+    bool         vertical  = splitPane->e.flags & UI_SPLIT_PANE_VERTICAL;
+
+    if (message == UI_MSG_PAINT) {
+        UIDrawControl((UIPainter *)dp, element->bounds,
+                      UI_DRAW_CONTROL_SPLITTER | (vertical ? UI_DRAW_CONTROL_STATE_VERTICAL : 0) |
+                          UI_DRAW_CONTROL_STATE_FROM_ELEMENT(element),
+                      NULL, 0, 0, element->window->scale);
+    } else if (message == UI_MSG_GET_CURSOR) {
+        return vertical ? UI_CURSOR_SPLIT_V : UI_CURSOR_SPLIT_H;
+    } else if (message == UI_MSG_MOUSE_DRAG) {
+        int cursor       = vertical ? element->window->cursorY : element->window->cursorX;
+        int splitterSize = UI_SIZE_SPLITTER * element->window->scale;
+        int space =
+            (vertical ? UI_RECT_HEIGHT(splitPane->e.bounds) : UI_RECT_WIDTH(splitPane->e.bounds)) -
+            splitterSize;
+        float oldWeight   = splitPane->weight;
+        splitPane->weight = (float)(cursor - ((float)splitterSize / 2) -
+                                    (vertical ? splitPane->e.bounds.t : splitPane->e.bounds.l)) /
+                            space;
+        if (splitPane->weight < 0.05f)
+            splitPane->weight = 0.05f;
+        if (splitPane->weight > 0.95f)
+            splitPane->weight = 0.95f;
+
+        if (splitPane->e.children[2]->messageClass == _UISplitPaneMessage &&
+            (splitPane->e.children[2]->flags & UI_SPLIT_PANE_VERTICAL) ==
+                (splitPane->e.flags & UI_SPLIT_PANE_VERTICAL)) {
+            UISplitPane *subSplitPane = (UISplitPane *)splitPane->e.children[2];
+            subSplitPane->weight      = (splitPane->weight - oldWeight - subSplitPane->weight +
+                                    oldWeight * subSplitPane->weight) /
+                                   (-1 + splitPane->weight);
+            if (subSplitPane->weight < 0.05f)
+                subSplitPane->weight = 0.05f;
+            if (subSplitPane->weight > 0.95f)
+                subSplitPane->weight = 0.95f;
+        }
+
+        UIElementRefresh(&splitPane->e);
+    }
+
+    return 0;
 }
 
 
-/////////////////////////////////////////
-// Tab panes.
-/////////////////////////////////////////
-
-int _UITabPaneMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UITabPaneMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UITabPane *tabPane = (UITabPane *)element;
 
@@ -223,6 +208,19 @@ int _UITabPaneMessage(UIElement *element, UIMessage message, int di, void *dp)
     }
 
     return 0;
+}
+
+
+//
+
+
+UISplitPane *UISplitPaneCreate(UIElement *parent, uint32_t flags, float weight)
+{
+    UISplitPane *splitPane = (UISplitPane *)UIElementCreate(sizeof(UISplitPane), parent, flags,
+                                                            _UISplitPaneMessage, "Split Pane");
+    splitPane->weight      = weight;
+    UIElementCreate(sizeof(UIElement), &splitPane->e, 0, _UISplitterMessage, "Splitter");
+    return splitPane;
 }
 
 

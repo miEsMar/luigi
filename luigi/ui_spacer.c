@@ -1,12 +1,9 @@
 #include "ui_spacer.h"
+#include "ui_event.h"
 #include "ui_window.h"
 
 
-/////////////////////////////////////////
-// Spacers.
-/////////////////////////////////////////
-
-int _UISpacerMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UISpacerMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     UISpacer *spacer = (UISpacer *)element;
 
@@ -18,6 +15,7 @@ int _UISpacerMessage(UIElement *element, UIMessage message, int di, void *dp)
 
     return 0;
 }
+
 
 UISpacer *UISpacerCreate(UIElement *parent, uint32_t flags, int width, int height)
 {
