@@ -1,5 +1,7 @@
 #include "ui_label.h"
 #include "ui_draw.h"
+#include "ui_event.h"
+#include "ui_string.h"
 #include "ui_window.h"
 #include "utils.h"
 
@@ -23,6 +25,7 @@ int _UILabelMessage(UIElement *element, UIMessage message, int di, void *dp)
     return 0;
 }
 
+
 void UILabelSetContent(UILabel *label, const char *string, ptrdiff_t stringBytes)
 {
     UI_FREE(label->label);
@@ -30,6 +33,7 @@ void UILabelSetContent(UILabel *label, const char *string, ptrdiff_t stringBytes
     UIElementMeasurementsChanged(&label->e, 1);
     UIElementRepaint(&label->e, NULL);
 }
+
 
 UILabel *UILabelCreate(UIElement *parent, uint32_t flags, const char *string, ptrdiff_t stringBytes)
 {

@@ -1,5 +1,6 @@
 #include "ui_pane.h"
 #include "ui_draw.h"
+#include "ui_event.h"
 #include "ui_rect.h"
 #include "ui_window.h"
 
@@ -28,7 +29,7 @@ int _UISplitterMessage(UIElement *element, UIMessage message, int di, void *dp)
             (vertical ? UI_RECT_HEIGHT(splitPane->e.bounds) : UI_RECT_WIDTH(splitPane->e.bounds)) -
             splitterSize;
         float oldWeight   = splitPane->weight;
-        splitPane->weight = (float)(cursor - splitterSize / 2 -
+        splitPane->weight = (float)(cursor - ((float)splitterSize / 2) -
                                     (vertical ? splitPane->e.bounds.t : splitPane->e.bounds.l)) /
                             space;
         if (splitPane->weight < 0.05f)

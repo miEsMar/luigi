@@ -1,7 +1,10 @@
 #include "ui_checkbox.h"
 #include "ui_button.h"
 #include "ui_draw.h"
+#include "ui_event.h"
+#include "ui_key.h"
 #include "ui_painter.h"
+#include "ui_string.h"
 #include "utils.h"
 
 

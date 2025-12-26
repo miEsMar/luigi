@@ -1,10 +1,13 @@
 #include "ui_button.h"
+#include "ui.h"
+#include "ui_draw.h"
 #include "ui_element.h"
+#include "ui_event.h"
+#include "ui_key.h"
 #include "ui_menu.h"
+#include "ui_string.h"
+#include "utils.h"
 
-/////////////////////////////////////////
-// Checkboxes and buttons.
-/////////////////////////////////////////
 
 int _UIButtonMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
