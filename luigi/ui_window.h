@@ -43,6 +43,9 @@ extern const int UI_KEYCODE_PAGE_DOWN;
 extern const int UI_KEYCODE_PAGE_UP;
 
 
+//
+
+
 typedef struct UIWindow {
     UIElement  e;
     UIElement *dialog;
@@ -83,16 +86,12 @@ typedef struct UIWindow {
 
 UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
                          int _height);
-int       UIMessageLoop(void);
-
-void UIMenuShow(UIMenu *menu);
 
 
 //
 
 
-UIWindow *_UIFindWindow(Window window);
-void      _UIWindowAdd(UIWindow *window);
+void _UIWindowAdd(UIWindow *window);
 
 
 void _UIWindowSetCursor(UIWindow *window, int cursor);
@@ -106,6 +105,7 @@ void _UIWindowDestroyCommon(UIWindow *window);
 
 
 bool _UIMessageLoopSingle(int *result);
+
 
 #ifdef __cplusplus
 }

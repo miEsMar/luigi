@@ -1,8 +1,11 @@
 #include "ui_code.h"
 #include "font.h"
 #include "ui.h"
+#include "ui_animation.h"
 #include "ui_clipboard.h"
 #include "ui_draw.h"
+#include "ui_event.h"
+#include "ui_key.h"
 #include "utils.h"
 
 
@@ -27,8 +30,9 @@ void UICodePositionToByte(UICode *code, int x, int y, int *line, int *byte)
         *line = 0;
     else if (*line >= code->lineCount)
         *line = code->lineCount - 1;
-    int column = (x - code->e.bounds.l + code->hScroll->position + ui.activeFont->glyphWidth / 2) /
-                 ui.activeFont->glyphWidth;
+    int column =
+        (x - code->e.bounds.l + code->hScroll->position + ((float)ui.activeFont->glyphWidth / 2)) /
+        ui.activeFont->glyphWidth;
     if (~code->e.flags & UI_CODE_NO_MARGIN)
         column -= (UI_SIZE_CODE_MARGIN + UI_SIZE_CODE_MARGIN_GAP) / ui.activeFont->glyphWidth;
     UIFontActivate(previousFont);

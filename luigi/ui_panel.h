@@ -33,6 +33,7 @@ typedef struct UIWrapPanel {
 
 //
 
+// Panels are by default vertical in layout, so items start at top and go down.
 UIPanel     *UIPanelCreate(UIElement *parent, uint32_t flags);
 UIWrapPanel *UIWrapPanelCreate(UIElement *parent, uint32_t flags);
 

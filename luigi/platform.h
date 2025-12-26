@@ -92,6 +92,7 @@ typedef struct UI_PlatformWindow {
 //
 
 typedef struct UIWindow UIWindow;
+typedef struct UIMenu   UIMenu;
 
 
 UI_Platform *UI_PlatformInit(void);
@@ -99,6 +100,15 @@ UI_Platform *UI_PlatformInit(void);
 
 void UI_Platform_render(UIWindow *window, UIPainter *painter);
 void UI_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y);
+
+
+void UIMenuShow(UIMenu *menu);
+
+
+//
+
+
+UIWindow *_UIFindWindow(Window window);
 
 
 #ifdef __cplusplus

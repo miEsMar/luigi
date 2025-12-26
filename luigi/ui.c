@@ -1,8 +1,9 @@
 #include "ui.h"
 #include "font.h"
-#include "ui_animation.h"
+#include "inspector.h"
 #include "ui_element.h"
 #include "ui_event.h"
+#include "ui_window.h"
 #include "utils.h"
 
 
@@ -28,26 +29,28 @@ void Luigi_Init(void)
 
     ui.platform = UI_PlatformInit();
 
-ret_:
     return;
 }
 
 
-//
-
-
-/// DEPRECATED
-void _UIInitialiseCommon(void)
+int Luigi_Loop(void)
 {
-    ui.theme = uiThemeDark;
+    _UIInspectorCreate();
+    _UIUpdate();
 
-#ifdef UI_FREETYPE
-    FT_Init_FreeType(&ui.ft);
-    UIFontActivate(UIFontCreate(_UI_TO_STRING_2(UI_FONT_PATH), 11));
+#ifdef UI_AUTOMATION_TESTS
+    return UIAutomationRunTests();
 #else
-    UI_FONT_LOAD_DEFAULT();
+    int result = 0;
+    while (!ui.quit && _UIMessageLoopSingle(&result)) {
+        ui.dialogResult = NULL;
+    }
+    return result;
 #endif
 }
+
+
+//
 
 
 void _UIUpdate(void)

@@ -1,4 +1,4 @@
-#include "platform.h"
+#include "../platform.h"
 
 
 #ifdef UI_WINDOWS
@@ -184,11 +184,10 @@ LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPAR
     return 0;
 }
 
-void UIInitialise()
+
+UI_Platform *UI_PlatformInit(void)
 {
     ui.heap = GetProcessHeap();
-
-    _UIInitialiseCommon();
 
     ui.cursors[UI_CURSOR_ARROW]             = LoadCursor(NULL, IDC_ARROW);
     ui.cursors[UI_CURSOR_TEXT]              = LoadCursor(NULL, IDC_IBEAM);

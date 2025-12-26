@@ -1,5 +1,4 @@
 #include "ui_window.h"
-#include "inspector.h"
 #include "ui.h"
 #include "ui_event.h"
 #include "ui_painter.h"
@@ -81,19 +80,4 @@ int _UIWindowMessageCommon(UIElement *element, UIMessage message, int di, void *
     }
 
     return 0;
-}
-
-
-int UIMessageLoop(void)
-{
-    _UIInspectorCreate();
-    _UIUpdate();
-#ifdef UI_AUTOMATION_TESTS
-    return UIAutomationRunTests();
-#else
-    int result = 0;
-    while (!ui.quit && _UIMessageLoopSingle(&result))
-        ui.dialogResult = NULL;
-    return result;
-#endif
 }
