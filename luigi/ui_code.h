@@ -73,11 +73,13 @@ typedef struct UICode {
 //
 
 UICode *UICodeCreate(UIElement *parent, uint32_t flags);
-void    UICodePositionToByte(UICode *code, int x, int y, int *line, int *byte);
-int     UICodeHitTest(UICode *code, int x, int y);
-void    UICodeMoveCaret(UICode *code, bool backward, bool word);
-void    UICodeFocusLine(UICode *code, int index);
-void    UICodeInsertContent(UICode *code, const char *content, ptrdiff_t byteCount, bool replace);
+UICode *UICodeCreateFromFile(UIElement *parent, uint32_t flags, const char *file_name);
+
+void UICodePositionToByte(UICode *code, int x, int y, int *line, int *byte);
+int  UICodeHitTest(UICode *code, int x, int y);
+void UICodeMoveCaret(UICode *code, bool backward, bool word);
+void UICodeFocusLine(UICode *code, int index);
+void UICodeInsertContent(UICode *code, const char *content, ptrdiff_t byteCount, bool replace);
 
 int UIDrawStringHighlighted(UIPainter *painter, UIRectangle lineBounds, const char *string,
                             ptrdiff_t bytes, int tabSize, UIStringSelection *selection);

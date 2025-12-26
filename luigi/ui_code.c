@@ -7,6 +7,7 @@
 #include "ui_event.h"
 #include "ui_key.h"
 #include "utils.h"
+#include <stdio.h>
 
 
 int _UICodeByteToColumn(UICode *code, int line, int byte)
@@ -683,5 +684,27 @@ UICode *UICodeCreate(UIElement *parent, uint32_t flags)
     code->hScroll = UIScrollBarCreate(&code->e, UI_SCROLL_BAR_HORIZONTAL);
     code->focused = -1;
     code->tabSize = 4;
+    return code;
+}
+
+
+UICode *UICodeCreateFromFile(UIElement *parent, uint32_t flags, const char *file_name)
+{
+    UICode *code = UICodeCreate(parent, flags);
+
+    if (file_name) {
+        FILE *f = fopen(file_name, "rb");
+        if (f) {
+            fseek(f, 0, SEEK_END);
+            const size_t sz     = ftell(f);
+            char        *buffer = (char *)UI_CALLOC(sz + 1);
+            fseek(f, 0, SEEK_SET);
+            size_t size = fread(buffer, 1, sz, f);
+            fclose(f);
+            UICodeInsertContent(code, buffer, size, true);
+            UICodeFocusLine(code, 0);
+        }
+    }
+
     return code;
 }
