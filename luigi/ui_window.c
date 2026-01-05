@@ -194,13 +194,13 @@ end:
 
 void _UIWindowEndPaint(UIWindow *window, UIPainter *painter)
 {
-    UI_Platform_render(window, painter);
+    Luigi_Platform_render(window, painter);
     return;
 }
 
 void _UIWindowGetScreenPosition(UIWindow *window, int *_x, int *_y)
 {
-    UI_Platform_get_screen_pos(window, _x, _y);
+    Luigi_Platform_get_screen_pos(window, _x, _y);
 }
 
 

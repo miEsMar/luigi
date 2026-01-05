@@ -2,6 +2,7 @@
 #include "../ui.h"
 #include "../ui_window.h"
 #include "../utils.h"
+#include "./x11.h"
 
 
 //
@@ -9,87 +10,91 @@
 
 void _UIClipboardWriteText(UIWindow *window, char *text)
 {
-    UI_FREE(ui.platform->pasteText);
-    ui.platform->pasteText = text;
-    XSetSelectionOwner(ui.platform->display, ui.platform->clipboardID, window->window.window, 0);
+    Luigi_Platform_X11 *platform = ui.platform;
+
+    UI_FREE(platform->pasteText);
+    platform->pasteText = text;
+    XSetSelectionOwner(platform->display, platform->clipboardID, window->window.window, 0);
 }
 
 
 char *_UIClipboardReadTextStart(UIWindow *window, size_t *bytes)
 {
-    Window clipboardOwner = XGetSelectionOwner(ui.platform->display, ui.platform->clipboardID);
+    Luigi_Platform_X11 *platform = ui.platform;
+
+    Window clipboardOwner = XGetSelectionOwner(platform->display, platform->clipboardID);
 
     if (clipboardOwner == None) {
         return NULL;
     }
 
     if (_UIFindWindow(clipboardOwner)) {
-        *bytes     = strlen(ui.platform->pasteText);
+        *bytes     = strlen(platform->pasteText);
         char *copy = (char *)UI_MALLOC(*bytes);
-        memcpy(copy, ui.platform->pasteText, *bytes);
+        memcpy(copy, platform->pasteText, *bytes);
         return copy;
     }
 
-    XConvertSelection(ui.platform->display, ui.platform->clipboardID, XA_STRING,
-                      ui.platform->xSelectionDataID, window->window.window, CurrentTime);
-    XSync(ui.platform->display, 0);
-    XNextEvent(ui.platform->display, &ui.platform->copyEvent);
+    XConvertSelection(platform->display, platform->clipboardID, XA_STRING,
+                      platform->xSelectionDataID, window->window.window, CurrentTime);
+    XSync(platform->display, 0);
+    XNextEvent(platform->display, &platform->copyEvent);
 
     // Hack to get around the fact that PropertyNotify arrives before SelectionNotify.
     // We need PropertyNotify for incremental transfers.
-    while (ui.platform->copyEvent.type == PropertyNotify) {
-        XNextEvent(ui.platform->display, &ui.platform->copyEvent);
+    while (platform->copyEvent.type == PropertyNotify) {
+        XNextEvent(platform->display, &platform->copyEvent);
     }
 
-    if (ui.platform->copyEvent.type == SelectionNotify &&
-        ui.platform->copyEvent.xselection.selection == ui.platform->clipboardID &&
-        ui.platform->copyEvent.xselection.property) {
+    if (platform->copyEvent.type == SelectionNotify &&
+        platform->copyEvent.xselection.selection == platform->clipboardID &&
+        platform->copyEvent.xselection.property) {
         Atom target;
         // This `itemAmount` is actually `bytes_after_return`
         unsigned long size, itemAmount;
         char         *data;
         int           format;
-        XGetWindowProperty(ui.platform->copyEvent.xselection.display,
-                           ui.platform->copyEvent.xselection.requestor,
-                           ui.platform->copyEvent.xselection.property, 0L, ~0L, 0, AnyPropertyType,
+        XGetWindowProperty(platform->copyEvent.xselection.display,
+                           platform->copyEvent.xselection.requestor,
+                           platform->copyEvent.xselection.property, 0L, ~0L, 0, AnyPropertyType,
                            &target, &format, &size, &itemAmount, (unsigned char **)&data);
 
         // We have to allocate for incremental transfers but we don't have to allocate for
         // non-incremental transfers. I'm allocating for both here to make _UIClipboardReadTextEnd
         // work the same for both
-        if (target != ui.platform->incrID) {
+        if (target != platform->incrID) {
             *bytes     = size;
             char *copy = (char *)UI_MALLOC(*bytes);
             memcpy(copy, data, *bytes);
             XFree(data);
-            XDeleteProperty(ui.platform->copyEvent.xselection.display,
-                            ui.platform->copyEvent.xselection.requestor,
-                            ui.platform->copyEvent.xselection.property);
+            XDeleteProperty(platform->copyEvent.xselection.display,
+                            platform->copyEvent.xselection.requestor,
+                            platform->copyEvent.xselection.property);
             return copy;
         }
 
         XFree(data);
-        XDeleteProperty(ui.platform->display, ui.platform->copyEvent.xselection.requestor,
-                        ui.platform->copyEvent.xselection.property);
-        XSync(ui.platform->display, 0);
+        XDeleteProperty(platform->display, platform->copyEvent.xselection.requestor,
+                        platform->copyEvent.xselection.property);
+        XSync(platform->display, 0);
 
         *bytes         = 0;
         char *fullData = NULL;
 
         while (true) {
             // TODO Timeout.
-            XNextEvent(ui.platform->display, &ui.platform->copyEvent);
+            XNextEvent(platform->display, &platform->copyEvent);
 
-            if (ui.platform->copyEvent.type == PropertyNotify) {
+            if (platform->copyEvent.type == PropertyNotify) {
                 // The other case - PropertyDelete would be caused by us and can be ignored
-                if (ui.platform->copyEvent.xproperty.state == PropertyNewValue) {
+                if (platform->copyEvent.xproperty.state == PropertyNewValue) {
                     unsigned long chunkSize;
 
                     // Note that this call deletes the property.
-                    XGetWindowProperty(
-                        ui.platform->display, ui.platform->copyEvent.xproperty.window,
-                        ui.platform->copyEvent.xproperty.atom, 0L, ~0L, True, AnyPropertyType,
-                        &target, &format, &chunkSize, &itemAmount, (unsigned char **)&data);
+                    XGetWindowProperty(platform->display, platform->copyEvent.xproperty.window,
+                                       platform->copyEvent.xproperty.atom, 0L, ~0L, True,
+                                       AnyPropertyType, &target, &format, &chunkSize, &itemAmount,
+                                       (unsigned char **)&data);
 
                     if (chunkSize == 0) {
                         return fullData;

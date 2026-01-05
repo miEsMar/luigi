@@ -18,7 +18,7 @@ void Luigi_Init(void)
     // }
 
 
-    ui.platform = UI_PlatformInit();
+    ui.platform = Luigi_PlatformInit();
 
     ui.theme = uiThemeDark;
 

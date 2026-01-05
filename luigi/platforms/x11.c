@@ -1,3 +1,4 @@
+#include "./x11.h"
 #include "../inspector.h"
 #include "../ui.h"
 #include "../ui_animation.h"
@@ -33,22 +34,24 @@ const int UI_KEYCODE_PAGE_UP   = XK_Page_Up;
 //
 
 
-void UI_Platform_render(UIWindow *window, UIPainter *painter)
+void Luigi_Platform_render(UIWindow *window, UIPainter *painter)
 {
-    // c
+    const Luigi_Platform_X11 *platform = ui.platform;
 
-    XPutImage(ui.platform->display, window->window.window, DefaultGC(ui.platform->display, 0),
+    XPutImage(platform->display, window->window.window, DefaultGC(platform->display, 0),
               window->window.image, UI_RECT_TOP_LEFT(window->updateRegion),
               UI_RECT_TOP_LEFT(window->updateRegion), UI_RECT_SIZE(window->updateRegion));
     return;
 }
 
 
-void UI_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
+void Luigi_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
 {
+    const Luigi_Platform_X11 *platform = ui.platform;
+
     Window child;
-    (void)XTranslateCoordinates(ui.platform->display, window->window.window,
-                                DefaultRootWindow(ui.platform->display), 0, 0, _x, _y, &child);
+    (void)XTranslateCoordinates(platform->display, window->window.window,
+                                DefaultRootWindow(platform->display), 0, 0, _x, _y, &child);
     return;
 }
 
@@ -58,7 +61,8 @@ void UI_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
 
 int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
+
     if (message == UI_MSG_DEALLOCATE) {
         UIWindow *window = (UIWindow *)element;
         _UIWindowDestroyCommon(window);
@@ -79,7 +83,7 @@ int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
 UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
                          int _height)
 {
-    UI_Platform *platform = ui.platform;
+    Luigi_Platform_X11 *platform = ui.platform;
 
     _UIMenusClose();
 
@@ -146,8 +150,9 @@ UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, in
 
 Display *_UIX11GetDisplay()
 {
-    // c
-    return ui.platform->display;
+    const Luigi_Platform_X11 *platform = ui.platform;
+
+    return platform->display;
 }
 
 
@@ -166,9 +171,9 @@ UIWindow *_UIFindWindow(Window window)
 }
 
 
-UI_Platform *UI_PlatformInit(void)
+Luigi_Platform *Luigi_PlatformInit(void)
 {
-    UI_Platform *platform = calloc(1, sizeof(*platform));
+    Luigi_Platform_X11 *platform = calloc(1, sizeof(*platform));
     if (NULL == platform) {
         return NULL;
     }
@@ -231,27 +236,29 @@ UI_Platform *UI_PlatformInit(void)
     event.data.ptr           = &platform->display;
     epoll_ctl(platform->epollFD, EPOLL_CTL_ADD, ConnectionNumber(platform->display), &event);
 
-    return platform;
+    return (Luigi_Platform *)platform;
 }
 
 
 void _UIWindowSetCursor(UIWindow *window, int cursor)
 {
-    UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
+
     XDefineCursor(platform->display, window->window.window, platform->cursors[cursor]);
 }
 
 
 void _UIX11ResetCursor(UIWindow *window)
 {
-    UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
+
     XDefineCursor(platform->display, window->window.window, platform->cursors[UI_CURSOR_ARROW]);
 }
 
 
 void UIMenuShow(UIMenu *menu)
 {
-    UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
 
     Window child;
 
@@ -342,7 +349,7 @@ void UIMenuShow(UIMenu *menu)
 
 void UIWindowPack(UIWindow *window, int _width)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
 
     int width  = _width ? _width : UIElementMessage(window->e.children[0], UI_MSG_GET_WIDTH, 0, 0);
     int height = UIElementMessage(window->e.children[0], UI_MSG_GET_HEIGHT, width, 0);
@@ -352,7 +359,7 @@ void UIWindowPack(UIWindow *window, int _width)
 
 bool _UIProcessEvent(XEvent *event)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
 
     if (event->type == ClientMessage &&
         (Atom)event->xclient.data.l[0] == platform->windowClosedID) {
@@ -867,7 +874,7 @@ typedef struct UIEpollDispatchPtr {
 
 bool _UIMessageLoopSingle(int *result)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
 
     XEvent events[64];
 
@@ -932,7 +939,7 @@ bool _UIMessageLoopSingle(int *result)
 
 void UIDragFilesStart(UIWindow *window, const char **paths, size_t count)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
 
     if (window->window.inDrag) {
         return;
@@ -1008,24 +1015,28 @@ void UIDragFilesStart(UIWindow *window, const char **paths, size_t count)
 
 void UIEpollAdd(int fd, UIEpollDispatchPtr *ptr)
 {
+    const Luigi_Platform_X11 *platform = ui.platform;
+
     struct epoll_event event = {};
     event.events             = EPOLLIN;
     event.data.ptr           = ptr;
-    bool success             = 0 == epoll_ctl(ui.platform->epollFD, EPOLL_CTL_ADD, fd, &event);
+    bool success             = 0 == epoll_ctl(platform->epollFD, EPOLL_CTL_ADD, fd, &event);
     UI_ASSERT(success);
 }
 
 
 void UIEpollRemove(int fd)
 {
-    bool success = 0 == epoll_ctl(ui.platform->epollFD, EPOLL_CTL_DEL, fd, NULL);
+    const Luigi_Platform_X11 *platform = ui.platform;
+
+    bool success = 0 == epoll_ctl(platform->epollFD, EPOLL_CTL_DEL, fd, NULL);
     UI_ASSERT(success);
 }
 
 
 void UIWindowPostMessage(UIWindow *window, UIMessage message, void *_dp)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform_X11 *platform = ui.platform;
 
     // HACK! Xlib doesn't seem to have a nice way to do this,
     // so send a specially crafted key press event instead.

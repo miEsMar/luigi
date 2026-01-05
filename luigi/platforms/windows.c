@@ -37,7 +37,7 @@ HANDLE win_heap = {0};
 
 static LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform *platform = ui.platform;
 
     UIWindow *window = (UIWindow *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
@@ -188,9 +188,9 @@ static LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wPara
 //
 
 
-UI_Platform *UI_PlatformInit(void)
+Luigi_Platform *Luigi_PlatformInit(void)
 {
-    UI_Platform *platform = calloc(1, sizeof(*platform));
+    Luigi_Platform *platform = calloc(1, sizeof(*platform));
     if (NULL == platform) {
         return NULL;
     }
@@ -230,7 +230,7 @@ UI_Platform *UI_PlatformInit(void)
 
 int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
-    const UI_Platform *platform = ui.platform;
+    const Luigi_Platform *platform = ui.platform;
     if (message == UI_MSG_DEALLOCATE) {
         UIWindow *window = (UIWindow *)element;
         _UIWindowDestroyCommon(window);
@@ -315,7 +315,7 @@ UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, in
 }
 
 
-void UI_Platform_render(UIWindow *window, UIPainter *painter)
+void Luigi_Platform_render(UIWindow *window, UIPainter *painter)
 {
     HDC              dc   = GetDC(window->window.hwnd);
     BITMAPINFOHEADER info = {0};
@@ -337,7 +337,7 @@ void _UIWindowSetCursor(UIWindow *window, int cursor)
 }
 
 
-void UI_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
+void Luigi_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
 {
     POINT p;
     p.x = 0;

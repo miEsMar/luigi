@@ -8,6 +8,7 @@ extern "C" {
 
 
 #include "font.h"
+#include "platform.h"
 #include "ui_element.h"
 #include "ui_theme.h"
 #include "ui_window.h"
@@ -28,7 +29,7 @@ extern struct Luigi ui;
 
 
 struct Luigi {
-    UI_Platform *platform;
+    Luigi_Platform platform;
 
     UIWindow *windows;
     UITheme   theme;

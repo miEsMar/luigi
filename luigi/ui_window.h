@@ -50,26 +50,29 @@ typedef struct UIWindow {
     UIElement  e;
     UIElement *dialog;
 
+    /* Shortcuts */
     UIShortcut *shortcuts;
     size_t      shortcutCount, shortcutAllocated;
 
-    float scale;
-
+    /* Window's settings */
+    float            scale;
     uint32_t        *bits;
     int              width, height;
     struct UIWindow *next;
 
+    /* Mouse related */
     UIElement *hovered, *pressed, *focused, *dialogOldFocus;
-    int        pressedButton;
+    int        cursorX, cursorY;
+    int        cursorStyle;
 
-    int cursorX, cursorY;
-    int cursorStyle;
+    /* Keys related */
+    int  pressedButton;
+    bool ctrl, shift, alt;
+
 
     // Set when a textbox is modified.
     // Useful for tracking whether changes to the loaded document have been saved.
     bool textboxModifiedFlag;
-
-    bool ctrl, shift, alt;
 
     UIRectangle updateRegion;
 
@@ -77,15 +80,11 @@ typedef struct UIWindow {
     float lastFullFillCount;
 #endif
 
-    UI_PlatformWindow window;
+    Luigi_PlatformWindow window;
 } UIWindow;
 
 
 //
-
-
-UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
-                         int _height);
 
 
 //

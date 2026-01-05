@@ -132,13 +132,6 @@ static int _UIDialogTextboxMessage(UIElement *element, UIMessage message, int di
 }
 
 
-void _UIDialogButtonInvoke(void *cp)
-{
-    // c
-    ui.dialogResult = (const char *)cp;
-}
-
-
 //
 
 
@@ -259,4 +252,11 @@ const char *UIDialogShow(UIWindow *window, uint32_t flags, const char *format, .
     if (window->dialogOldFocus)
         UIElementFocus(window->dialogOldFocus);
     return ui.dialogResult ? ui.dialogResult : "";
+}
+
+
+void _UIDialogButtonInvoke(void *cp)
+{
+    // c
+    ui.dialogResult = (const char *)cp;
 }

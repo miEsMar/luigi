@@ -12,6 +12,7 @@ extern "C" {
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # include <X11/cursorfont.h>
+# include <stdbool.h>
 # include <sys/epoll.h>
 #endif
 #ifdef UI_COCOA
@@ -26,47 +27,7 @@ extern "C" {
 #endif
 
 
-#include "ui_cursor.h"
-#include "ui_painter.h"
-
-
-typedef struct UI_Platform {
-#ifdef UI_LINUX
-    Display *display;
-    Visual  *visual;
-    XIM      xim;
-    Atom     windowClosedID, primaryID, uriListID, plainTextID;
-    Atom     dndEnterID, dndLeaveID, dndTypeListID, dndPositionID, dndStatusID, dndActionCopyID,
-        dndDropID, dndSelectionID, dndFinishedID, dndAwareID;
-    Atom   clipboardID, xSelectionDataID, textID, targetID, incrID;
-    Cursor cursors[UI_CURSOR_COUNT];
-    char  *pasteText;
-    XEvent copyEvent;
-    int    epollFD;
-#endif
-
-#ifdef UI_WINDOWS
-    HCURSOR cursors[UI_CURSOR_COUNT];
-    bool    assertionFailure;
-#endif
-
-#ifdef UI_ESSENCE
-    EsInstance *instance;
-#endif
-
-#if defined(UI_ESSENCE) || defined(UI_COCOA)
-    void     *menuData[256]; // HACK This limits the number of menu items to 128.
-    uintptr_t menuIndex;
-#endif
-
-#ifdef UI_COCOA
-    int       menuX, menuY;
-    UIWindow *menuWindow;
-#endif
-} UI_Platform;
-
-
-typedef struct UI_PlatformWindow {
+typedef struct Luigi_PlatformWindow {
 #if defined(UI_LINUX)
     Window   window;
     XImage  *image;
@@ -90,20 +51,27 @@ typedef struct UI_PlatformWindow {
     NSWindow *window;
     void     *view;
 #endif
-} UI_PlatformWindow;
+} Luigi_PlatformWindow;
+
+
+#include "ui_painter.h"
 
 
 //
+
+
+typedef void *Luigi_Platform;
+// typedef void *Luigi_PlatformWindow;
 
 typedef struct UIWindow UIWindow;
 typedef struct UIMenu   UIMenu;
 
 
-UI_Platform *UI_PlatformInit(void);
-
-
-void UI_Platform_render(UIWindow *window, UIPainter *painter);
-void UI_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y);
+Luigi_Platform *Luigi_PlatformInit(void);
+UIWindow       *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
+                               int _height);
+void            Luigi_Platform_render(UIWindow *window, UIPainter *painter);
+void            Luigi_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y);
 
 
 void UIMenuShow(UIMenu *menu);
