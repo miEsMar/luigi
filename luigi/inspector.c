@@ -118,9 +118,9 @@ int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void
 
 void _UIInspectorCreate(void)
 {
-    inspector.window         = UIWindowCreate(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
-    UISplitPane *splitPane   = UISplitPaneCreate(&inspector.window->e, 0, 0.5f);
-    inspector.inspectorTable = UITableCreate(&splitPane->e, 0, "Class\tBounds\tID");
+    inspector.window       = Luigi_Platform_CreateWindow(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
+    UISplitPane *splitPane = UISplitPaneCreate(&inspector.window->e, 0, 0.5f);
+    inspector.inspectorTable                = UITableCreate(&splitPane->e, 0, "Class\tBounds\tID");
     inspector.inspectorTable->e.messageUser = _UIInspectorTableMessage;
     inspector.inspectorLog                  = UICodeCreate(&splitPane->e, 0);
 }

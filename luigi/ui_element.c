@@ -229,7 +229,7 @@ UIElement *UIParentPop(void)
 UIRectangle UIElementScreenBounds(UIElement *element)
 {
     int x = 0, y = 0;
-    _UIWindowGetScreenPosition(element->window, &x, &y);
+    Luigi_Platform_get_screen_pos(&element->window->window, &x, &y);
     return UIRectangleAdd(element->bounds, UI_RECT_2(x, y));
 }
 

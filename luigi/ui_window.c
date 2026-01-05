@@ -198,11 +198,6 @@ void _UIWindowEndPaint(UIWindow *window, UIPainter *painter)
     return;
 }
 
-void _UIWindowGetScreenPosition(UIWindow *window, int *_x, int *_y)
-{
-    Luigi_Platform_get_screen_pos(window, _x, _y);
-}
-
 
 /////////////////////////////////////////
 // Common platform layer functionality.

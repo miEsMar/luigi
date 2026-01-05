@@ -383,8 +383,8 @@ int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
     return _UIWindowMessageCommon(element, message, di, dp);
 }
 
-UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
-                         int _height)
+UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle,
+                                      int _width, int _height)
 {
     _UIMenusClose();
     UIWindow *window = (UIWindow *)UIElementCreate(
@@ -475,7 +475,7 @@ void _UIWindowEndPaint(UIWindow *window, UIPainter *painter)
     [(UICocoaMainView *)window->view setNeedsDisplayInRect:((UICocoaMainView *)window->view).frame];
 }
 
-void _UIWindowGetScreenPosition(UIWindow *window, int *x, int *y)
+void Luigi_Platform_get_screen_pos(UIWindow *window, int *x, int *y)
 {
     NSPoint point = [window->window convertPointToScreen:NSMakePoint(0, 0)];
     *x = point.x, *y = point.y;

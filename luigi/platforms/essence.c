@@ -184,7 +184,8 @@ int _UIWindowCanvasMessage(EsElement *element, EsMessage *message)
     return ES_HANDLED;
 }
 
-UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int width, int height)
+UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle,
+                                      int width, int height)
 {
     _UIMenusClose();
 

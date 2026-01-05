@@ -99,7 +99,6 @@ void _UIWindowAdd(UIWindow *window);
 void _UIWindowSetCursor(UIWindow *window, int cursor);
 void _UIWindowSetPressed(UIWindow *window, UIElement *element, int button);
 
-void _UIWindowGetScreenPosition(UIWindow *window, int *_x, int *_y);
 void _UIWindowEndPaint(UIWindow *window, UIPainter *painter);
 
 int  _UIWindowMessageCommon(UIElement *element, UIMessage message, int di, void *dp);

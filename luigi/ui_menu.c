@@ -161,7 +161,7 @@ void _UIMenuPrepare(UIMenu *menu, int *width, int *height)
 
 UIMenu *UIMenuCreate(UIElement *parent, uint32_t flags)
 {
-    UIWindow *window = UIWindowCreate(parent->window, UI_WINDOW_MENU, 0, 0, 0);
+    UIWindow *window = Luigi_Platform_CreateWindow(parent->window, UI_WINDOW_MENU, 0, 0, 0);
     UIMenu   *menu =
         (UIMenu *)UIElementCreate(sizeof(UIMenu), &window->e, flags, _UIMenuMessage, "Menu");
     menu->vScroll      = UIScrollBarCreate(&menu->e, UI_ELEMENT_NON_CLIENT);
@@ -173,7 +173,7 @@ UIMenu *UIMenuCreate(UIElement *parent, uint32_t flags)
         menu->pointY = (flags & UI_MENU_PLACE_ABOVE) ? (screenBounds.t + 1) : (screenBounds.b - 1);
     } else {
         int x = 0, y = 0;
-        _UIWindowGetScreenPosition(parent->window, &x, &y);
+        Luigi_Platform_get_screen_pos(&parent->window->window, &x, &y);
 
         menu->pointX = parent->window->cursorX + x;
         menu->pointY = parent->window->cursorY + y;

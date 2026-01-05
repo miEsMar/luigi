@@ -2,6 +2,7 @@
 #define LUIGI_PLATFORM_H_
 
 
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -68,10 +69,10 @@ typedef struct UIMenu   UIMenu;
 
 
 Luigi_Platform *Luigi_PlatformInit(void);
-UIWindow       *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
-                               int _height);
+UIWindow       *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle,
+                                            int _width, int _height);
+void            Luigi_Platform_get_screen_pos(Luigi_PlatformWindow *pwindow, int *_x, int *_y);
 void            Luigi_Platform_render(UIWindow *window, UIPainter *painter);
-void            Luigi_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y);
 
 
 void UIMenuShow(UIMenu *menu);

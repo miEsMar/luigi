@@ -45,12 +45,12 @@ void Luigi_Platform_render(UIWindow *window, UIPainter *painter)
 }
 
 
-void Luigi_Platform_get_screen_pos(UIWindow *window, int *_x, int *_y)
+void Luigi_Platform_get_screen_pos(Luigi_PlatformWindow *pwindow, int *_x, int *_y)
 {
     const Luigi_Platform_X11 *platform = ui.platform;
 
     Window child;
-    (void)XTranslateCoordinates(platform->display, window->window.window,
+    (void)XTranslateCoordinates(platform->display, pwindow->window,
                                 DefaultRootWindow(platform->display), 0, 0, _x, _y, &child);
     return;
 }
@@ -80,8 +80,8 @@ int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
 //
 
 
-UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
-                         int _height)
+UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle,
+                                      int _width, int _height)
 {
     Luigi_Platform_X11 *platform = ui.platform;
 
@@ -124,7 +124,7 @@ UIWindow *UIWindowCreate(UIWindow *owner, uint32_t flags, const char *cTitle, in
 
     if (flags & UI_WINDOW_CENTER_IN_OWNER) {
         int x = 0, y = 0;
-        _UIWindowGetScreenPosition(owner, &x, &y);
+        Luigi_Platform_get_screen_pos(&owner->window, &x, &y);
         XMoveResizeWindow(platform->display, window->window.window,
                           x + owner->width / 2 - width / 2, y + owner->height / 2 - height / 2,
                           width, height);
