@@ -1,5 +1,6 @@
 #include "ui_element.h"
 #include "ui.h"
+#include "ui_animation.h"
 #include "ui_draw.h"
 #include "ui_event.h"
 #include "ui_rect.h"

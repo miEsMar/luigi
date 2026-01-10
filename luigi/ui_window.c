@@ -16,15 +16,20 @@ static int UIWindow_Event(UIElement *element, UIMessage message, int di, void *d
 {
     UIWindow *window = (UIWindow *)element;
 
+    // Destroy window
     if (message == UI_MSG_DEALLOCATE) {
-        _UIWindowDestroyCommon(window);
+        UI_FREE(window->bits);
+        UI_FREE(window->shortcuts);
+
         Luigi_Platform_DestroyWindow(&window->window);
     }
 
+
     if (message == UI_MSG_LAYOUT && element->childCount) {
         UIElementMove(element->children[0], element->bounds, false);
-        if (element->window->dialog)
+        if (element->window->dialog) {
             UIElementMove(element->window->dialog, element->bounds, false);
+        }
         UIElementRepaint(element, NULL);
     } else if (message == UI_MSG_GET_CHILD_STABILITY) {
         return 3; // Both width and height of the child element are ignored.
@@ -114,11 +119,10 @@ bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)
             UIElementMessage(window->pressed, UI_MSG_UPDATE, UI_UPDATE_HOVERED, 0);
         }
 
-        if (ui.quit || ui.dialogResult)
+        if (ui.quit || ui.dialogResult) {
             goto end;
-    }
-
-    if (!window->pressed) {
+        }
+    } else {
         UIElement *hovered = UIElementFindByPoint(&window->e, window->cursorX, window->cursorY);
 
         if (message == UI_MSG_MOUSE_MOVE) {
@@ -281,11 +285,4 @@ void _UIWindowSetPressed(UIWindow *window, UIElement *element, int button)
         child    = ancestor;
         ancestor = ancestor->parent;
     }
-}
-
-
-void _UIWindowDestroyCommon(UIWindow *window)
-{
-    UI_FREE(window->bits);
-    UI_FREE(window->shortcuts);
 }
