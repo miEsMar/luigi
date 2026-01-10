@@ -143,14 +143,6 @@ void Luigi_Platform_DestroyWindow(Luigi_PlatformWindow *window)
 //
 
 
-Display *_UIX11GetDisplay()
-{
-    const Luigi_Platform_X11 *platform = ui.platform;
-
-    return platform->display;
-}
-
-
 UIWindow *_UIFindWindow(Window window)
 {
     UIWindow *w = ui.windows;
