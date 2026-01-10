@@ -372,7 +372,7 @@ int _UICocoaRemapKey(int code)
 
 @end
 
-int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
+int UIWindow_Event(UIElement *element, UIMessage message, int di, void *dp)
 {
     if (message == UI_MSG_DEALLOCATE) {
         UIWindow *window = (UIWindow *)element;

@@ -62,17 +62,19 @@ typedef struct Luigi_PlatformWindow {
 
 
 typedef void *Luigi_Platform;
-// typedef void *Luigi_PlatformWindow;
 
 typedef struct UIWindow UIWindow;
 typedef struct UIMenu   UIMenu;
 
 
 Luigi_Platform *Luigi_PlatformInit(void);
-UIWindow       *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle,
-                                            int _width, int _height);
-void            Luigi_Platform_get_screen_pos(Luigi_PlatformWindow *pwindow, int *_x, int *_y);
-void            Luigi_Platform_render(UIWindow *window, UIPainter *painter);
+
+void Luigi_Platform_CreateWindow(UIWindow *window, uint32_t flags, const char *cTitle, int _width,
+                                 int _height);
+void Luigi_Platform_DestroyWindow(Luigi_PlatformWindow *window);
+
+void Luigi_Platform_get_screen_pos(Luigi_PlatformWindow *pwindow, int *_x, int *_y);
+void Luigi_Platform_render(UIWindow *window, UIPainter *painter);
 
 
 void UIMenuShow(UIMenu *menu);

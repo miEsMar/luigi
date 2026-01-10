@@ -16,20 +16,6 @@
 static UIInspector inspector = {0};
 
 
-void UIInspectorLog(const char *cFormat, ...)
-{
-    va_list arguments;
-
-    va_start(arguments, cFormat);
-    char buffer[4096];
-    vsnprintf(buffer, sizeof(buffer), cFormat, arguments);
-    UICodeInsertContent(inspector.inspectorLog, buffer, -1, false);
-    va_end(arguments);
-
-    UIElementRefresh(&inspector.inspectorLog->e);
-}
-
-
 UIElement *_UIInspectorFindNthElement(UIElement *element, int *index, int *depth)
 {
     if (*index == 0) {
@@ -58,7 +44,7 @@ UIElement *_UIInspectorFindNthElement(UIElement *element, int *index, int *depth
 }
 
 
-int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void *dp)
+static int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     if (!inspector.inspectorTarget) {
         return 0;
@@ -116,13 +102,33 @@ int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void
 }
 
 
+//
+
+
+void UIInspectorLog(const char *cFormat, ...)
+{
+    va_list arguments;
+
+    va_start(arguments, cFormat);
+    char buffer[4096];
+    vsnprintf(buffer, sizeof(buffer), cFormat, arguments);
+    UICodeInsertContent(inspector.inspectorLog, buffer, -1, false);
+    va_end(arguments);
+
+    UIElementRefresh(&inspector.inspectorLog->e);
+}
+
+
 void _UIInspectorCreate(void)
 {
-    inspector.window       = Luigi_Platform_CreateWindow(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
-    UISplitPane *splitPane = UISplitPaneCreate(&inspector.window->e, 0, 0.5f);
+    inspector.window = Luigi_CreateWindow(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
+
+    UISplitPane *splitPane                  = UISplitPaneCreate(&inspector.window->e, 0, 0.5f);
     inspector.inspectorTable                = UITableCreate(&splitPane->e, 0, "Class\tBounds\tID");
     inspector.inspectorTable->e.messageUser = _UIInspectorTableMessage;
     inspector.inspectorLog                  = UICodeCreate(&splitPane->e, 0);
+
+    return;
 }
 
 

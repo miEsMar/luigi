@@ -8,6 +8,7 @@ extern "C" {
 
 
 #ifdef UI_LINUX
+# include "../platform.h"
 # include "../ui_cursor.h"
 # include <X11/Xatom.h>
 # include <X11/Xlib.h>
@@ -32,8 +33,7 @@ typedef struct Luigi_Platform_X11 {
 } Luigi_Platform_X11;
 
 
-typedef struct Luigi_PlatformWindow_X11 {
-    Window   window;
+typedef struct Luigi_PlatformWindow_Data_X11 {
     XImage  *image;
     XIC      xic;
     unsigned ctrlCode, shiftCode, altCode;
@@ -41,8 +41,14 @@ typedef struct Luigi_PlatformWindow_X11 {
     int      dragDestinationVersion;
     bool     inDrag, dragDestinationCanDrop;
     char    *uriList;
+} Luigi_PlatformWindow_Data_X11_t;
+
+
+typedef struct Luigi_PlatformWindow_X11 {
+    Window window;
+    void  *usr_ptr;
 } Luigi_PlatformWindow_X11;
-#endif
+#endif // UI_LINUX
 
 #ifdef __cplusplus
 }

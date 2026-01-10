@@ -228,7 +228,7 @@ Luigi_Platform *Luigi_PlatformInit(void)
 //
 
 
-int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
+int UIWindow_Event(UIElement *element, UIMessage message, int di, void *dp)
 {
     const Luigi_Platform *platform = ui.platform;
     if (message == UI_MSG_DEALLOCATE) {
@@ -287,7 +287,7 @@ UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const cha
     _UIMenusClose();
 
     UIWindow *window = (UIWindow *)UIElementCreate(
-        sizeof(UIWindow), NULL, flags | UI_ELEMENT_WINDOW, _UIWindowMessage, "Window");
+        sizeof(UIWindow), NULL, flags | UI_ELEMENT_WINDOW, UIWindow_Event, "Window");
     _UIWindowAdd(window);
     if (owner)
         window->scale = owner->scale;

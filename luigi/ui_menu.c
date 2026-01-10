@@ -161,7 +161,7 @@ void _UIMenuPrepare(UIMenu *menu, int *width, int *height)
 
 UIMenu *UIMenuCreate(UIElement *parent, uint32_t flags)
 {
-    UIWindow *window = Luigi_Platform_CreateWindow(parent->window, UI_WINDOW_MENU, 0, 0, 0);
+    UIWindow *window = Luigi_CreateWindow(parent->window, UI_WINDOW_MENU, 0, 0, 0);
     UIMenu   *menu =
         (UIMenu *)UIElementCreate(sizeof(UIMenu), &window->e, flags, _UIMenuMessage, "Menu");
     menu->vScroll      = UIScrollBarCreate(&menu->e, UI_ELEMENT_NON_CLIENT);

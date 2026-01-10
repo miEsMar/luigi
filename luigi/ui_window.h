@@ -50,6 +50,8 @@ typedef struct UIWindow {
     UIElement  e;
     UIElement *dialog;
 
+    struct UIWindow *owner;
+
     /* Shortcuts */
     UIShortcut *shortcuts;
     size_t      shortcutCount, shortcutAllocated;
@@ -89,6 +91,9 @@ typedef struct UIWindow {
 
 //
 
+
+UIWindow *Luigi_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
+                             int _height);
 
 bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp);
 

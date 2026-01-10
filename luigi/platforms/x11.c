@@ -10,6 +10,21 @@
 
 
 #ifdef UI_LINUX
+
+void Luigi_Platform_render(UIWindow *window, UIPainter *painter)
+{
+    const Luigi_Platform_X11 *platform = ui.platform;
+
+    XPutImage(platform->display, window->window.window, DefaultGC(platform->display, 0),
+              window->window.image, UI_RECT_TOP_LEFT(window->updateRegion),
+              UI_RECT_TOP_LEFT(window->updateRegion), UI_RECT_SIZE(window->updateRegion));
+    return;
+}
+
+
+//
+
+
 const int UI_KEYCODE_A         = XK_a;
 const int UI_KEYCODE_BACKSPACE = XK_BackSpace;
 const int UI_KEYCODE_DELETE    = XK_Delete;
@@ -34,17 +49,6 @@ const int UI_KEYCODE_PAGE_UP   = XK_Page_Up;
 //
 
 
-void Luigi_Platform_render(UIWindow *window, UIPainter *painter)
-{
-    const Luigi_Platform_X11 *platform = ui.platform;
-
-    XPutImage(platform->display, window->window.window, DefaultGC(platform->display, 0),
-              window->window.image, UI_RECT_TOP_LEFT(window->updateRegion),
-              UI_RECT_TOP_LEFT(window->updateRegion), UI_RECT_SIZE(window->updateRegion));
-    return;
-}
-
-
 void Luigi_Platform_get_screen_pos(Luigi_PlatformWindow *pwindow, int *_x, int *_y)
 {
     const Luigi_Platform_X11 *platform = ui.platform;
@@ -59,39 +63,12 @@ void Luigi_Platform_get_screen_pos(Luigi_PlatformWindow *pwindow, int *_x, int *
 //
 
 
-int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
-{
-    const Luigi_Platform_X11 *platform = ui.platform;
-
-    if (message == UI_MSG_DEALLOCATE) {
-        UIWindow *window = (UIWindow *)element;
-        _UIWindowDestroyCommon(window);
-        window->window.image->data = NULL;
-        XDestroyImage(window->window.image);
-        XDestroyIC(window->window.xic);
-        XDestroyWindow(platform->display, ((UIWindow *)element)->window.window);
-        UI_FREE(window->window.uriList);
-    }
-
-    return _UIWindowMessageCommon(element, message, di, dp);
-}
-
-
-//
-
-
-UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle,
-                                      int _width, int _height)
+void Luigi_Platform_CreateWindow(UIWindow *window, uint32_t flags, const char *cTitle, int _width,
+                                 int _height)
 {
     Luigi_Platform_X11 *platform = ui.platform;
 
     _UIMenusClose();
-
-    UIWindow *window = (UIWindow *)UIElementCreate(
-        sizeof(UIWindow), NULL, flags | UI_ELEMENT_WINDOW, _UIWindowMessage, "Window");
-    _UIWindowAdd(window);
-    if (owner)
-        window->scale = owner->scale;
 
     int width  = (flags & UI_WINDOW_MENU) ? 1 : _width ? _width : 800;
     int height = (flags & UI_WINDOW_MENU) ? 1 : _height ? _height : 600;
@@ -102,8 +79,9 @@ UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const cha
     window->window.window =
         XCreateWindow(platform->display, DefaultRootWindow(platform->display), 0, 0, width, height,
                       0, 0, InputOutput, CopyFromParent, CWOverrideRedirect, &attributes);
-    if (cTitle)
+    if (cTitle) {
         XStoreName(platform->display, window->window.window, cTitle);
+    }
     XSelectInput(platform->display, window->window.window,
                  SubstructureNotifyMask | ExposureMask | PointerMotionMask | ButtonPressMask |
                      ButtonReleaseMask | KeyPressMask | KeyReleaseMask | StructureNotifyMask |
@@ -122,12 +100,12 @@ UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const cha
         XMapRaised(platform->display, window->window.window);
     }
 
-    if (flags & UI_WINDOW_CENTER_IN_OWNER) {
+    if (flags & UI_WINDOW_CENTER_IN_OWNER && window->owner) {
         int x = 0, y = 0;
-        Luigi_Platform_get_screen_pos(&owner->window, &x, &y);
+        Luigi_Platform_get_screen_pos(&window->owner->window, &x, &y);
         XMoveResizeWindow(platform->display, window->window.window,
-                          x + owner->width / 2 - width / 2, y + owner->height / 2 - height / 2,
-                          width, height);
+                          x + (window->owner->width / 2) - (width / 2),
+                          y + (window->owner->height / 2) - (height / 2), width, height);
     }
 
     XSetWMProtocols(platform->display, window->window.window, &platform->windowClosedID, 1);
@@ -144,8 +122,25 @@ UIWindow *Luigi_Platform_CreateWindow(UIWindow *owner, uint32_t flags, const cha
 
     XFlush(platform->display);
 
-    return window;
+    return;
 }
+
+
+void Luigi_Platform_DestroyWindow(Luigi_PlatformWindow *window)
+{
+    Luigi_Platform_X11 *platform_x11 = ui.platform;
+
+    window->image->data = NULL;
+    XDestroyImage(window->image);
+    XDestroyIC(window->xic);
+    XDestroyWindow(platform_x11->display, window->window);
+    UI_FREE(window->uriList);
+
+    return;
+}
+
+
+//
 
 
 Display *_UIX11GetDisplay()
@@ -535,11 +530,13 @@ bool _UIProcessEvent(XEvent *event)
         if (window->window.inDrag && event->type == ButtonRelease) {
             // Send XdndLeave or XdndDrop.
             if (window->window.dragDestinationVersion != -1) {
-                XClientMessageEvent m = {.type    = ClientMessage,
-                                         .display = platform->display,
-                                         .window  = window->window.dragDestination,
-                                         .format  = 32,
-                                         .data    = {.l = {window->window.window}}};
+                XClientMessageEvent m = {
+                    .type    = ClientMessage,
+                    .display = platform->display,
+                    .window  = window->window.dragDestination,
+                    .format  = 32,
+                    .data    = {.l = {window->window.window}},
+                };
 
                 if (window->window.dragDestinationCanDrop) {
                     m.message_type = platform->dndDropID;
@@ -1061,4 +1058,5 @@ void UIWindowPostMessage(UIWindow *window, UIMessage message, void *_dp)
     XSendEvent(platform->display, window->window.window, True, KeyPressMask, (XEvent *)&event);
     XFlush(platform->display);
 }
+
 #endif // UI_LINUX

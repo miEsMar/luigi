@@ -1,4 +1,5 @@
 #include "ui_window.h"
+#include "platform.h"
 #include "ui.h"
 #include "ui_event.h"
 #include "ui_key.h"
@@ -6,6 +7,45 @@
 #include "ui_painter.h"
 #include "ui_window.h"
 #include "utils.h"
+
+
+//
+
+
+static int UIWindow_Event(UIElement *element, UIMessage message, int di, void *dp)
+{
+    UIWindow *window = (UIWindow *)element;
+
+    if (message == UI_MSG_DEALLOCATE) {
+        _UIWindowDestroyCommon(window);
+        Luigi_Platform_DestroyWindow(&window->window);
+    }
+
+    return _UIWindowMessageCommon(element, message, di, dp);
+}
+
+
+//
+
+
+UIWindow *Luigi_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle, int _width,
+                             int _height)
+{
+    UIWindow *window = (UIWindow *)UIElementCreate(
+        sizeof(UIWindow), NULL, flags | UI_ELEMENT_WINDOW, UIWindow_Event, "Window");
+
+    if (window) {
+        _UIWindowAdd(window);
+        if (owner) {
+            window->scale = owner->scale;
+            window->owner = owner;
+        }
+
+        Luigi_Platform_CreateWindow(window, flags, cTitle, _width, _height);
+    }
+
+    return window;
+}
 
 
 //
