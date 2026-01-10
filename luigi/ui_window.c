@@ -21,7 +21,26 @@ static int UIWindow_Event(UIElement *element, UIMessage message, int di, void *d
         Luigi_Platform_DestroyWindow(&window->window);
     }
 
-    return _UIWindowMessageCommon(element, message, di, dp);
+    if (message == UI_MSG_LAYOUT && element->childCount) {
+        UIElementMove(element->children[0], element->bounds, false);
+        if (element->window->dialog)
+            UIElementMove(element->window->dialog, element->bounds, false);
+        UIElementRepaint(element, NULL);
+    } else if (message == UI_MSG_GET_CHILD_STABILITY) {
+        return 3; // Both width and height of the child element are ignored.
+    }
+
+    return 0;
+}
+
+
+static void _Luigi_RegisterWindow(UIWindow *window)
+{
+    window->scale    = 1.0f;
+    window->e.window = window;
+    window->hovered  = &window->e;
+    window->next     = ui.windows;
+    ui.windows       = window;
 }
 
 
@@ -35,7 +54,7 @@ UIWindow *Luigi_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle
         sizeof(UIWindow), NULL, flags | UI_ELEMENT_WINDOW, UIWindow_Event, "Window");
 
     if (window) {
-        _UIWindowAdd(window);
+        _Luigi_RegisterWindow(window);
         if (owner) {
             window->scale = owner->scale;
             window->owner = owner;
@@ -269,29 +288,4 @@ void _UIWindowDestroyCommon(UIWindow *window)
 {
     UI_FREE(window->bits);
     UI_FREE(window->shortcuts);
-}
-
-
-void _UIWindowAdd(UIWindow *window)
-{
-    window->scale    = 1.0f;
-    window->e.window = window;
-    window->hovered  = &window->e;
-    window->next     = ui.windows;
-    ui.windows       = window;
-}
-
-
-int _UIWindowMessageCommon(UIElement *element, UIMessage message, int di, void *dp)
-{
-    if (message == UI_MSG_LAYOUT && element->childCount) {
-        UIElementMove(element->children[0], element->bounds, false);
-        if (element->window->dialog)
-            UIElementMove(element->window->dialog, element->bounds, false);
-        UIElementRepaint(element, NULL);
-    } else if (message == UI_MSG_GET_CHILD_STABILITY) {
-        return 3; // Both width and height of the child element are ignored.
-    }
-
-    return 0;
 }

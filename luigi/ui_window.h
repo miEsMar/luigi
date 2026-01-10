@@ -97,16 +97,11 @@ UIWindow *Luigi_CreateWindow(UIWindow *owner, uint32_t flags, const char *cTitle
 
 bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp);
 
-
-void _UIWindowAdd(UIWindow *window);
-
-
 void _UIWindowSetCursor(UIWindow *window, int cursor);
 void _UIWindowSetPressed(UIWindow *window, UIElement *element, int button);
 
 void _UIWindowEndPaint(UIWindow *window, UIPainter *painter);
 
-int  _UIWindowMessageCommon(UIElement *element, UIMessage message, int di, void *dp);
 void _UIWindowDestroyCommon(UIWindow *window);
 
 

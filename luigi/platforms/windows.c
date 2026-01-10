@@ -228,7 +228,7 @@ Luigi_Platform *Luigi_PlatformInit(void)
 //
 
 
-int UIWindow_Event(UIElement *element, UIMessage message, int di, void *dp)
+int _UIWindowMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     const Luigi_Platform *platform = ui.platform;
     if (message == UI_MSG_DEALLOCATE) {
