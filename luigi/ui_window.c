@@ -1,6 +1,7 @@
 #include "ui_window.h"
 #include "platform.h"
 #include "ui.h"
+#include "ui_element.h"
 #include "ui_event.h"
 #include "ui_key.h"
 #include "ui_menu.h"
@@ -134,20 +135,11 @@ bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)
                 window->cursorStyle = cursor;
                 _UIWindowSetCursor(window, cursor);
             }
-        } else if (message == UI_MSG_LEFT_DOWN) {
+            // Mouse keys down
+        } else if (message >= UI_MSG_LEFT_DOWN && message <= UI_MSG_RIGHT_DOWN) {
             if ((window->e.flags & UI_WINDOW_MENU) || !_UIMenusClose()) {
-                _UIWindowSetPressed(window, hovered, 1);
-                UIElementMessage(hovered, UI_MSG_LEFT_DOWN, di, dp);
-            }
-        } else if (message == UI_MSG_MIDDLE_DOWN) {
-            if ((window->e.flags & UI_WINDOW_MENU) || !_UIMenusClose()) {
-                _UIWindowSetPressed(window, hovered, 2);
-                UIElementMessage(hovered, UI_MSG_MIDDLE_DOWN, di, dp);
-            }
-        } else if (message == UI_MSG_RIGHT_DOWN) {
-            if ((window->e.flags & UI_WINDOW_MENU) || !_UIMenusClose()) {
-                _UIWindowSetPressed(window, hovered, 3);
-                UIElementMessage(hovered, UI_MSG_RIGHT_DOWN, di, dp);
+                _UIWindowSetPressed(window, hovered, message - UI_MSG_LEFT_DOWN + 1);
+                UIElementMessage(hovered, message, di, dp);
             }
         } else if (message == UI_MSG_MOUSE_WHEEL) {
             UIElement *element = hovered;
@@ -156,9 +148,9 @@ bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)
                 if (UIElementMessage(element, UI_MSG_MOUSE_WHEEL, di, dp)) {
                     break;
                 }
-
                 element = element->parent;
             }
+            // Keyboard stroke event
         } else if (message == UI_MSG_KEY_TYPED || message == UI_MSG_KEY_RELEASED) {
             handled = false;
 
@@ -170,7 +162,6 @@ bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)
                         handled = true;
                         break;
                     }
-
                     element = element->parent;
                 }
             } else {
@@ -187,8 +178,7 @@ bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)
                     UIElement *element = start;
 
                     do {
-                        if (element->childCount &&
-                            !(element->flags & (UI_ELEMENT_HIDE | UI_ELEMENT_DISABLED))) {
+                        if (element->childCount && UI_ELEMENT_VISIBLE(element)) {
                             element = window->shift ? element->children[element->childCount - 1]
                                                     : element->children[0];
                             continue;
@@ -207,9 +197,8 @@ bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)
                         if (!element) {
                             element = &window->e;
                         }
-                    } while (element != start &&
-                             ((~element->flags & UI_ELEMENT_TAB_STOP) ||
-                              (element->flags & (UI_ELEMENT_HIDE | UI_ELEMENT_DISABLED))));
+                    } while (element != start && ((~element->flags & UI_ELEMENT_TAB_STOP) ||
+                                                  UI_ELEMENT_INVISIBLE(element)));
 
                     if (~element->flags & UI_ELEMENT_WINDOW) {
                         UIElementFocus(element);

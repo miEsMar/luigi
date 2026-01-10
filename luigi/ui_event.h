@@ -34,10 +34,10 @@ typedef enum UIMessage {
     // Input events.
     UI_MSG_INPUT_EVENTS_START, // not sent to disabled elements
     UI_MSG_LEFT_DOWN,
-    UI_MSG_LEFT_UP,
     UI_MSG_MIDDLE_DOWN,
-    UI_MSG_MIDDLE_UP,
     UI_MSG_RIGHT_DOWN,
+    UI_MSG_LEFT_UP,
+    UI_MSG_MIDDLE_UP,
     UI_MSG_RIGHT_UP,
     UI_MSG_KEY_TYPED,    // dp = pointer to UIKeyTyped; return 1 if handled
     UI_MSG_KEY_RELEASED, // dp = pointer to UIKeyTyped; return 1 if handled

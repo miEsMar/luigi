@@ -37,6 +37,10 @@ typedef enum UIMessage UIMessage;
 #define UI_ELEMENT_DESTROY_DESCENDENT  (1 << 31)
 
 
+#define UI_ELEMENT_INVISIBLE(e) ((e)->flags & (UI_ELEMENT_HIDE | UI_ELEMENT_DISABLED))
+#define UI_ELEMENT_VISIBLE(e)   !UI_ELEMENT_INVISIBLE(e)
+
+
 typedef struct UIElement {
     uint32_t flags; // First 16 bits are element specific.
     uint32_t id;
