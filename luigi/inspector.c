@@ -164,7 +164,7 @@ void Luigi_Inspector_Update(void)
 }
 
 
-void Luigi_Inspector_SetFocudedWindow(UIWindow *window)
+void Luigi_Inspector_SetFocusedWindow(UIWindow *window)
 {
     if (!inspector.window || !inspector.inspectorTable)
         return;

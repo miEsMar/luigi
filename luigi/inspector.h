@@ -25,8 +25,7 @@ typedef struct UIInspector {
 
 void Luigi_Inspector_Create(void);
 void Luigi_Inspector_Update(void);
-
-void Luigi_Inspector_SetFocudedWindow(UIWindow *window);
+void Luigi_Inspector_SetFocusedWindow(UIWindow *window);
 
 
 #ifdef __cplusplus

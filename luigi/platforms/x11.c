@@ -557,7 +557,7 @@ bool _UIProcessEvent(XEvent *event)
             _UIWindowInputEvent(window, UI_MSG_MOUSE_WHEEL, 72, 0);
         }
 
-        Luigi_Inspector_SetFocudedWindow(window);
+        Luigi_Inspector_SetFocusedWindow(window);
     } else if (event->type == KeyPress) {
         UIWindow *window = _UIFindWindow(event->xkey.window);
         if (!window)

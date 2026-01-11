@@ -143,7 +143,7 @@ static LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wPara
         _UIMenusClose();
 
         if (message == WM_SETFOCUS) {
-            Luigi_Inspector_SetFocudedWindow(window);
+            Luigi_Inspector_SetFocusedWindow(window);
             UIElementMessage(&window->e, UI_MSG_WINDOW_ACTIVATE, 0, 0);
         }
     } else if (message == WM_MOUSEACTIVATE && (window->e.flags & UI_WINDOW_MENU)) {
