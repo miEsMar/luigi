@@ -23,11 +23,10 @@ typedef struct UIInspector {
 //
 
 
+void Luigi_InspectorCreate(void);
 void UIInspectorLog(const char *cFormat, ...);
 
-
 void _UIInspectorSetFocusedWindow(UIWindow *window);
-void _UIInspectorCreate(void);
 void _UIInspectorRefresh(void);
 
 

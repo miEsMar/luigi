@@ -119,7 +119,7 @@ void UIInspectorLog(const char *cFormat, ...)
 }
 
 
-void _UIInspectorCreate(void)
+void Luigi_InspectorCreate(void)
 {
     inspector.window = Luigi_CreateWindow(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
 
@@ -171,4 +171,6 @@ void _UIInspectorSetFocusedWindow(UIWindow *window)
         inspector.inspectorTarget = window;
         _UIInspectorRefresh();
     }
+
+    return;
 }

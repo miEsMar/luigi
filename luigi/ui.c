@@ -10,7 +10,7 @@
 struct Luigi ui;
 
 
-void Luigi_Init(void)
+void Luigi_Init(Luigi_InitConfig *config)
 {
     // struct Luigi *luigi = UI_CALLOC(sizeof(*luigi));
     // if (NULL == luigi) {
@@ -29,13 +29,16 @@ void Luigi_Init(void)
     UI_FONT_LOAD_DEFAULT();
 #endif
 
+    if (config->with_inspector) {
+        Luigi_InspectorCreate();
+    }
+
     return;
 }
 
 
 int Luigi_Loop(void)
 {
-    _UIInspectorCreate();
     Luigi_UpdateUI();
 
 #ifdef UI_AUTOMATION_TESTS

@@ -52,7 +52,14 @@ struct Luigi {
 //
 
 
-void Luigi_Init(void);
+typedef struct Luigi_InitConfig {
+    bool with_inspector;
+} Luigi_InitConfig;
+
+
+//
+
+void Luigi_Init(Luigi_InitConfig *config);
 void Luigi_UpdateUI(void);
 int  Luigi_Loop(void);
 

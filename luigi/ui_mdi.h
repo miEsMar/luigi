@@ -28,6 +28,9 @@ extern "C" {
         UIRectangleAdd(bounds, UI_RECT_4(borderSize, -borderSize, titleSize, -borderSize));
 
 
+//
+
+
 typedef struct UIMDIClient {
 #define UI_MDI_CLIENT_TRANSPARENT (1 << 0)
     UIElement          e;

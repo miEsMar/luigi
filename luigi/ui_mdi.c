@@ -14,6 +14,7 @@
 static inline int _UIMDIChildHitTest(UIMDIChild *mdiChild, int x, int y)
 {
     UIElement *element = &mdiChild->e;
+
     UI_MDI_CHILD_CALCULATE_LAYOUT(element->bounds, element->window->scale);
     int cornerSize = UI_SIZE_MDI_CHILD_CORNER * element->window->scale;
     if (!UIRectangleContains(element->bounds, x, y) || UIRectangleContains(content, x, y))
