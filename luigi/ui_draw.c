@@ -206,7 +206,7 @@ void UIDrawTriangle(UIPainter *painter, int x0, int y0, int x1, int y1, int x2, 
         xt = painter->clip.r - xo;
 
     // Step 3: Split into 2 triangles with bases aligned with the x-axis.
-    float xm0 = (x2 - x0) * (y1 - y0) / (y2 - y0), xm1 = x1 - x0;
+    float xm0 = (float)((x2 - x0) * (y1 - y0)) / (y2 - y0), xm1 = x1 - x0;
     if (xm1 < xm0) {
         float xmt = xm0;
         xm0 = xm1, xm1 = xmt;
