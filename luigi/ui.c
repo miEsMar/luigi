@@ -30,7 +30,7 @@ void Luigi_Init(Luigi_InitConfig *config)
 #endif
 
     if (config->with_inspector) {
-        Luigi_InspectorCreate();
+        Luigi_Inspector_Create();
     }
 
     return;

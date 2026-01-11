@@ -61,7 +61,7 @@ void _UIElementDestroyDescendents(UIElement *element, bool topLevel)
     }
 
 #ifdef UI_DEBUG
-    _UIInspectorRefresh();
+    Luigi_InspectorUpdate();
 #endif
 }
 
@@ -197,7 +197,7 @@ UIElement *UIElementCreate(size_t bytes, UIElement *parent, uint32_t flags,
     element->id         = ++id;
 
 #ifdef UI_DEBUG
-    _UIInspectorRefresh();
+    Luigi_InspectorUpdate();
 #endif
 
     if (flags & UI_ELEMENT_PARENT_PUSH) {
@@ -276,7 +276,7 @@ void UIElementFocus(UIElement *element)
         UIElementMessage(element, UI_MSG_UPDATE, UI_UPDATE_FOCUSED, 0);
 
 #ifdef UI_DEBUG
-    _UIInspectorRefresh();
+    Luigi_InspectorUpdate();
 #endif
 }
 

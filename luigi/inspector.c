@@ -16,7 +16,7 @@
 static UIInspector inspector = {0};
 
 
-UIElement *_UIInspectorFindNthElement(UIElement *element, int *index, int *depth)
+static UIElement *_UIInspectorFindNthElement(UIElement *element, int *index, int *depth)
 {
     if (*index == 0) {
         return element;
@@ -34,7 +34,6 @@ UIElement *_UIInspectorFindNthElement(UIElement *element, int *index, int *depth
                 if (depth) {
                     *depth = *depth + 1;
                 }
-
                 return result;
             }
         }
@@ -44,11 +43,28 @@ UIElement *_UIInspectorFindNthElement(UIElement *element, int *index, int *depth
 }
 
 
+static int _UIInspectorCountElements(UIElement *element)
+{
+    int count = 1;
+
+    for (uint32_t i = 0; i < element->childCount; i++) {
+        UIElement *child = element->children[i];
+
+        if (!(child->flags & (UI_ELEMENT_DESTROY | UI_ELEMENT_HIDE))) {
+            count += _UIInspectorCountElements(child);
+        }
+    }
+
+    return count;
+}
+
+
 static int _UIInspectorTableMessage(UIElement *element, UIMessage message, int di, void *dp)
 {
     if (!inspector.inspectorTarget) {
         return 0;
     }
+
 
     if (message == UI_MSG_TABLE_GET_ITEM) {
         UITableGetItem *m     = (UITableGetItem *)dp;
@@ -56,8 +72,9 @@ static int _UIInspectorTableMessage(UIElement *element, UIMessage message, int d
         int             depth = 0;
         UIElement      *element =
             _UIInspectorFindNthElement(&inspector.inspectorTarget->e, &index, &depth);
-        if (!element)
+        if (!element) {
             return 0;
+        }
 
         if (m->column == 0) {
             return snprintf(m->buffer, m->bufferBytes, "%.*s%s", depth * 2, "                ",
@@ -69,12 +86,15 @@ static int _UIInspectorTableMessage(UIElement *element, UIMessage message, int d
             return snprintf(m->buffer, m->bufferBytes, "%d%c", element->id,
                             element->window->focused == element ? '*' : ' ');
         }
-    } else if (message == UI_MSG_MOUSE_MOVE) {
-        int        index   = UITableHitTest(inspector.inspectorTable, element->window->cursorX,
-                                            element->window->cursorY);
+    } else if (inspector.window->hovered) {
+        int index = UITableHitTest(inspector.inspectorTable, element->window->cursorX,
+                                   element->window->cursorY);
+
         UIElement *element = NULL;
-        if (index >= 0)
+        if (index >= 0) {
             element = _UIInspectorFindNthElement(&inspector.inspectorTarget->e, &index, NULL);
+        }
+
         UIWindow *window     = inspector.inspectorTarget;
         UIPainter painter    = {0};
         window->updateRegion = window->e.bounds;
@@ -102,24 +122,26 @@ static int _UIInspectorTableMessage(UIElement *element, UIMessage message, int d
 }
 
 
+// static void UIInspectorLog(const char *cFormat, ...)
+// {
+//     va_list arguments;
+
+//     va_start(arguments, cFormat);
+//     char buffer[4096];
+//     vsnprintf(buffer, sizeof(buffer), cFormat, arguments);
+//     UICodeInsertContent(inspector.inspectorLog, buffer, -1, false);
+//     va_end(arguments);
+
+//     UIElementRefresh(&inspector.inspectorLog->e);
+
+//     return;
+// }
+
+
 //
 
 
-void UIInspectorLog(const char *cFormat, ...)
-{
-    va_list arguments;
-
-    va_start(arguments, cFormat);
-    char buffer[4096];
-    vsnprintf(buffer, sizeof(buffer), cFormat, arguments);
-    UICodeInsertContent(inspector.inspectorLog, buffer, -1, false);
-    va_end(arguments);
-
-    UIElementRefresh(&inspector.inspectorLog->e);
-}
-
-
-void Luigi_InspectorCreate(void)
+void Luigi_Inspector_Create(void)
 {
     inspector.window = Luigi_CreateWindow(0, UI_WINDOW_INSPECTOR, "Inspector", 0, 0);
 
@@ -132,23 +154,7 @@ void Luigi_InspectorCreate(void)
 }
 
 
-int _UIInspectorCountElements(UIElement *element)
-{
-    int count = 1;
-
-    for (uint32_t i = 0; i < element->childCount; i++) {
-        UIElement *child = element->children[i];
-
-        if (!(child->flags & (UI_ELEMENT_DESTROY | UI_ELEMENT_HIDE))) {
-            count += _UIInspectorCountElements(child);
-        }
-    }
-
-    return count;
-}
-
-
-void _UIInspectorRefresh(void)
+void Luigi_Inspector_Update(void)
 {
     if (!inspector.inspectorTarget || !inspector.window || !inspector.inspectorTable)
         return;
@@ -158,7 +164,7 @@ void _UIInspectorRefresh(void)
 }
 
 
-void _UIInspectorSetFocusedWindow(UIWindow *window)
+void Luigi_Inspector_SetFocudedWindow(UIWindow *window)
 {
     if (!inspector.window || !inspector.inspectorTable)
         return;
@@ -169,7 +175,7 @@ void _UIInspectorSetFocusedWindow(UIWindow *window)
 
     if (inspector.inspectorTarget != window) {
         inspector.inspectorTarget = window;
-        _UIInspectorRefresh();
+        Luigi_Inspector_Update();
     }
 
     return;

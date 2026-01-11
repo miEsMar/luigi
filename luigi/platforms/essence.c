@@ -128,7 +128,7 @@ int _UIWindowCanvasMessage(EsElement *element, EsMessage *message)
         m.code      = message->keyboard.scancode;
         return _UIWindowInputEvent(window, UI_MSG_KEY_TYPED, 0, &m) ? ES_HANDLED : 0;
     } else if (message->type == ES_MSG_MOUSE_LEFT_CLICK) {
-        _UIInspectorSetFocusedWindow(window);
+        Luigi_Inspector_SetFocudedWindow(window);
     } else if (message->type == ES_MSG_USER_START) {
         UIElementMessage(&window->e, (UIMessage)message->user.context1.u, 0,
                          (void *)message->user.context2.p);
