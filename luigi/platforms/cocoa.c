@@ -227,7 +227,7 @@ int _UICocoaRemapKey(int code)
 - (void)windowDidBecomeKey:(NSNotification *)notification
 {
     UIElementMessage(&_uiWindow->e, UI_MSG_WINDOW_ACTIVATE, 0, 0);
-    _UIUpdate();
+    Luigi_UpdateUI();
 }
 
 - (void)windowDidResize:(NSNotification *)notification
@@ -239,7 +239,7 @@ int _UICocoaRemapKey(int code)
     _uiWindow->e.bounds = UI_RECT_2S(_uiWindow->width, _uiWindow->height);
     _uiWindow->e.clip   = UI_RECT_2S(_uiWindow->width, _uiWindow->height);
     UIElementRelayout(&_uiWindow->e);
-    _UIUpdate();
+    Luigi_UpdateUI();
 }
 @end
 

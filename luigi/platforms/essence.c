@@ -103,7 +103,7 @@ int _UIWindowCanvasMessage(EsElement *element, EsMessage *message)
         window->e.bounds = UI_RECT_2S(window->width, window->height);
         window->e.clip   = UI_RECT_2S(window->width, window->height);
         UIElementRelayout(&window->e);
-        _UIUpdate();
+        Luigi_UpdateUI();
     } else if (message->type == ES_MSG_SCROLL_WHEEL) {
         _UIWindowInputEvent(window, UI_MSG_MOUSE_WHEEL, -message->scrollWheel.dy, 0);
     } else if (message->type == ES_MSG_MOUSE_MOVED || message->type == ES_MSG_HOVERED_END ||
@@ -132,7 +132,7 @@ int _UIWindowCanvasMessage(EsElement *element, EsMessage *message)
     } else if (message->type == ES_MSG_USER_START) {
         UIElementMessage(&window->e, (UIMessage)message->user.context1.u, 0,
                          (void *)message->user.context2.p);
-        _UIUpdate();
+        Luigi_UpdateUI();
     } else if (message->type == ES_MSG_GET_CURSOR) {
         message->cursorStyle = ES_CURSOR_NORMAL;
         if (window->cursor == UI_CURSOR_TEXT)

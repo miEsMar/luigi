@@ -379,52 +379,47 @@ void UIElementMove(UIElement *element, UIRectangle bounds, bool layout)
 }
 
 
-void _UIElementPaint(UIElement *element, UIPainter *painter)
+void Luigi_ElementPaint(UIElement *element, UIPainter *painter)
 {
     if (element->flags & UI_ELEMENT_HIDE) {
         return;
     }
 
     // Clip painting to the element's clip.
-
     painter->clip = UIRectangleIntersection(element->clip, painter->clip);
-
     if (!UI_RECT_VALID(painter->clip)) {
         return;
     }
 
     // Paint the element.
-
     UIElementMessage(element, UI_MSG_PAINT, 0, painter);
 
     // Paint its children.
-
     UIRectangle previousClip = painter->clip;
-
     for (uintptr_t i = 0; i < element->childCount; i++) {
         painter->clip = previousClip;
-        _UIElementPaint(element->children[i], painter);
+        Luigi_ElementPaint(element->children[i], painter);
     }
 
     // Draw the foreground and border.
-
     painter->clip = previousClip;
     UIElementMessage(element, UI_MSG_PAINT_FOREGROUND, 0, painter);
-
     if (element->flags & UI_ELEMENT_BORDER) {
         UIDrawBorder(painter, element->bounds, ui.theme.border,
                      UI_RECT_1((int)element->window->scale));
     }
+
+    return;
 }
 
 
-bool _UIDestroy(UIElement *element)
+bool Luigi_ElementDestroy(UIElement *element)
 {
     if (element->flags & UI_ELEMENT_DESTROY_DESCENDENT) {
         element->flags &= ~UI_ELEMENT_DESTROY_DESCENDENT;
 
         for (uintptr_t i = 0; i < element->childCount; i++) {
-            if (_UIDestroy(element->children[i])) {
+            if (Luigi_ElementDestroy(element->children[i])) {
                 UI_MEMMOVE(&element->children[i], &element->children[i + 1],
                            sizeof(UIElement *) * (element->childCount - i - 1));
                 element->childCount--, i--;
@@ -454,8 +449,9 @@ bool _UIDestroy(UIElement *element)
         UIElementAnimate(element, true);
         UI_FREE(element->children);
         UI_FREE(element);
+
         return true;
-    } else {
-        return false;
     }
+
+    return false;
 }

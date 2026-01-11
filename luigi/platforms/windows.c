@@ -47,7 +47,7 @@ static LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wPara
 
     if (message == WM_CLOSE) {
         if (UIElementMessage(&window->e, UI_MSG_WINDOW_CLOSE, 0, 0)) {
-            _UIUpdate();
+            Luigi_UpdateUI();
             return 0;
         } else {
             PostQuitMessage(0);
@@ -61,7 +61,7 @@ static LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wPara
         window->e.bounds = UI_RECT_2S(window->width, window->height);
         window->e.clip   = UI_RECT_2S(window->width, window->height);
         UIElementRelayout(&window->e);
-        _UIUpdate();
+        Luigi_UpdateUI();
     } else if (message == WM_MOUSEMOVE) {
         if (!window->window.trackingLeave) {
             window->window.trackingLeave = true;
@@ -165,16 +165,16 @@ static LRESULT CALLBACK _UIWindowProcedure(HWND hwnd, UINT message, WPARAM wPara
             UI_FREE(files[i]);
         UI_FREE(files);
         DragFinish(drop);
-        _UIUpdate();
+        Luigi_UpdateUI();
     } else if (message == WM_APP + 1) {
         UIElementMessage(&window->e, (UIMessage)wParam, 0, (void *)lParam);
-        _UIUpdate();
+        Luigi_UpdateUI();
     } else {
         if (message == WM_NCLBUTTONDOWN || message == WM_NCMBUTTONDOWN ||
             message == WM_NCRBUTTONDOWN) {
             if (~window->e.flags & UI_WINDOW_MENU) {
                 _UIMenusClose();
-                _UIUpdate();
+                Luigi_UpdateUI();
             }
         }
 

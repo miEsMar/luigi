@@ -223,7 +223,7 @@ const char *UIDialogShow(UIWindow *window, uint32_t flags, const char *format, .
     for (int i = 1; i <= 3; i++)
         _UIWindowSetPressed(window, NULL, i);
     UIElementRefresh(&window->e);
-    _UIUpdate();
+    Luigi_UpdateUI();
     while (!ui.dialogResult && _UIMessageLoopSingle(&result))
         ;
     ui.quit = !ui.dialogResult;

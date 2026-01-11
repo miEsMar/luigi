@@ -87,7 +87,7 @@ static int _UIInspectorTableMessage(UIElement *element, UIMessage message, int d
             window->bits[i] = 0xFF00FF;
         }
 
-        _UIElementPaint(&window->e, &painter);
+        Luigi_ElementPaint(&window->e, &painter);
         painter.clip = UI_RECT_2S(window->width, window->height);
 
         if (element) {

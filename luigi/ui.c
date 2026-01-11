@@ -36,7 +36,7 @@ void Luigi_Init(void)
 int Luigi_Loop(void)
 {
     _UIInspectorCreate();
-    _UIUpdate();
+    Luigi_UpdateUI();
 
 #ifdef UI_AUTOMATION_TESTS
     return UIAutomationRunTests();
@@ -53,25 +53,26 @@ int Luigi_Loop(void)
 //
 
 
-void _UIUpdate(void)
+void Luigi_UpdateUI(void)
 {
     UIWindow  *window = ui.windows;
     UIWindow **link   = &ui.windows;
 
     while (window) {
-        UIWindow *next = window->next;
+        UIElement *e    = &window->e;
+        UIWindow  *next = window->next;
 
-        UIElementMessage(&window->e, UI_MSG_WINDOW_UPDATE_START, 0, 0);
-        UIElementMessage(&window->e, UI_MSG_WINDOW_UPDATE_BEFORE_DESTROY, 0, 0);
+        UIElementMessage(e, UI_MSG_WINDOW_UPDATE_START, 0, 0);
+        UIElementMessage(e, UI_MSG_WINDOW_UPDATE_BEFORE_DESTROY, 0, 0);
 
-        if (_UIDestroy(&window->e)) {
+        if (Luigi_ElementDestroy(e)) {
             *link = next;
         } else {
             link = &window->next;
 
-            UIElementMessage(&window->e, UI_MSG_WINDOW_UPDATE_BEFORE_LAYOUT, 0, 0);
-            UIElementMove(&window->e, window->e.bounds, false);
-            UIElementMessage(&window->e, UI_MSG_WINDOW_UPDATE_BEFORE_PAINT, 0, 0);
+            UIElementMessage(e, UI_MSG_WINDOW_UPDATE_BEFORE_LAYOUT, 0, 0);
+            UIElementMove(e, window->e.bounds, false);
+            UIElementMessage(e, UI_MSG_WINDOW_UPDATE_BEFORE_PAINT, 0, 0);
 
             if (UI_RECT_VALID(window->updateRegion)) {
 #ifdef __cplusplus
@@ -84,7 +85,7 @@ void _UIUpdate(void)
                 painter.height = window->height;
                 painter.clip   = UIRectangleIntersection(UI_RECT_2S(window->width, window->height),
                                                          window->updateRegion);
-                _UIElementPaint(&window->e, &painter);
+                Luigi_ElementPaint(&window->e, &painter);
                 _UIWindowEndPaint(window, &painter);
                 window->updateRegion = UI_RECT_1(0);
 

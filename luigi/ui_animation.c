@@ -53,6 +53,6 @@ void _UIProcessAnimations(void)
     }
 
     if (update) {
-        _UIUpdate();
+        Luigi_UpdateUI();
     }
 }

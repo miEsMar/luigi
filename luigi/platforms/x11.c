@@ -356,7 +356,7 @@ bool _UIProcessEvent(XEvent *event)
         bool exit = !UIElementMessage(&window->e, UI_MSG_WINDOW_CLOSE, 0, 0);
         if (exit)
             return true;
-        _UIUpdate();
+        Luigi_UpdateUI();
         return false;
     } else if (event->type == Expose) {
         UIWindow *window = _UIFindWindow(event->xexpose.window);
@@ -385,7 +385,7 @@ bool _UIProcessEvent(XEvent *event)
                 window->bits[i] = 0xFF00FF;
 # endif
             UIElementRelayout(&window->e);
-            _UIUpdate();
+            Luigi_UpdateUI();
         }
     } else if (event->type == MotionNotify) {
         UIWindow *window = _UIFindWindow(event->xmotion.window);
@@ -571,7 +571,7 @@ bool _UIProcessEvent(XEvent *event)
             p |= (uintptr_t)(event->xkey.time & 0xFFFFFFFF) << 32;
 # endif
             UIElementMessage(&window->e, (UIMessage)event->xkey.state, 0, (void *)p);
-            _UIUpdate();
+            Luigi_UpdateUI();
         } else {
             char   text[32];
             KeySym symbol = NoSymbol;
@@ -652,7 +652,7 @@ bool _UIProcessEvent(XEvent *event)
         UIElementMessage(&window->e, UI_MSG_WINDOW_ACTIVATE, 0, 0);
     } else if (event->type == FocusOut || event->type == ResizeRequest) {
         _UIMenusClose();
-        _UIUpdate();
+        Luigi_UpdateUI();
     } else if (event->type == ClientMessage &&
                event->xclient.message_type == platform->dndEnterID) {
         UIWindow *window = _UIFindWindow(event->xclient.window);
@@ -791,7 +791,7 @@ bool _UIProcessEvent(XEvent *event)
         XFlush(platform->display);
 
         window->window.dragSource = 0; // Drag complete.
-        _UIUpdate();
+        Luigi_UpdateUI();
     } else if (event->type == SelectionRequest) {
         // printf("SelectionRequest\n");
         UIWindow *window = _UIFindWindow(event->xclient.window);
@@ -886,7 +886,7 @@ bool _UIMessageLoopSingle(int *result)
         } else {
             UIEpollDispatchPtr *ptr = (UIEpollDispatchPtr *)event.data.ptr;
             ptr->fp(ptr);
-            _UIUpdate();
+            Luigi_UpdateUI();
             return true;
         }
     }

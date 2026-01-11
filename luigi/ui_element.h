@@ -96,10 +96,11 @@ void UIElementDestroyDescendents(UIElement *element);
 //
 
 
+void Luigi_ElementPaint(UIElement *element, UIPainter *painter);
+bool Luigi_ElementDestroy(UIElement *element);
+
 UIElement *_UIElementNextOrPreviousSibling(UIElement *element, bool previous);
-void       _UIElementPaint(UIElement *element, UIPainter *painter);
 void       _UIElementDestroyDescendents(UIElement *element, bool topLevel);
-bool       _UIDestroy(UIElement *element);
 
 
 #ifdef __cplusplus

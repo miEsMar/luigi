@@ -53,10 +53,8 @@ struct Luigi {
 
 
 void Luigi_Init(void);
+void Luigi_UpdateUI(void);
 int  Luigi_Loop(void);
-
-
-void _UIUpdate(void);
 
 
 //

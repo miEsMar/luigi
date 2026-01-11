@@ -234,7 +234,7 @@ bool _UIWindowInputEvent(UIWindow *window, UIMessage message, int di, void *dp)
     }
 
 end:
-    _UIUpdate();
+    Luigi_UpdateUI();
     return handled;
 }
 
